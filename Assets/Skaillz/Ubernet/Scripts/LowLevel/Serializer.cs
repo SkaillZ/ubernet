@@ -8,6 +8,7 @@ namespace Skaillz.Ubernet
     {
         public static class TypeId
         {
+            public const byte Null = 0;
             public const byte Byte = 1;
             public const byte Bool = 2;
             public const byte Short = 3;
@@ -49,8 +50,12 @@ namespace Skaillz.Ubernet
 
         public void Serialize(object value, Stream stream)
         {
-            var type = value.GetType();
-            if (type == typeof(byte))
+            var type = value?.GetType();
+            if (ReferenceEquals(value, null))
+            {
+                _helper.SerializeByte(TypeId.Null, stream);
+            }
+            else if (type == typeof(byte))
             {
                 _helper.SerializeByte(TypeId.Byte, stream);
                 _helper.SerializeByte((byte) value, stream);
@@ -138,6 +143,8 @@ namespace Skaillz.Ubernet
             byte typeId = _helper.DeserializeByte(stream);
             switch (typeId)
             {
+                case TypeId.Null:
+                    return null;
                 case TypeId.Byte:
                     return _helper.DeserializeByte(stream);
                 case TypeId.Bool:
@@ -253,6 +260,11 @@ namespace Skaillz.Ubernet
 
         private byte TypeToID(Type type)
         {
+            if (type == null)
+            {
+                return TypeId.Null;
+            }
+            
             if (type == typeof(byte))
             {
                 return TypeId.Byte;

@@ -25,8 +25,13 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
             set { _id = value; }
         }
 
-        public abstract void Serialize(Stream stream);
-        public abstract void Deserialize(Stream stream);
+        public virtual void Serialize(Stream stream)
+        {
+        }
+
+        public virtual void Deserialize(Stream stream)
+        {
+        }
         
         public virtual void OnRegister()
         {
@@ -38,6 +43,31 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
             {
                 Destroy(this);
             }
+        }
+
+        protected virtual void Update()
+        {
+            if (Entity == null)
+            {
+                return;
+            }
+
+            if (Entity.IsLocal())
+            {
+                OnLocalUpdate();
+            }
+            else
+            {
+                OnRemoteUpdate();
+            }
+        }
+
+        protected virtual void OnLocalUpdate()
+        {
+        }
+        
+        protected virtual void OnRemoteUpdate()
+        {
         }
         
 #if UNITY_EDITOR

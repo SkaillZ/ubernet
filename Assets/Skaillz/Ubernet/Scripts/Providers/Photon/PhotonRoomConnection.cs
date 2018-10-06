@@ -24,7 +24,8 @@ namespace Skaillz.Ubernet.Providers.Photon
         
         private readonly IClient _localClient = new Client(-1);
         private IClient _server = new Client(-1);
-        
+        private bool _sendEvents = true;
+
         public ISerializer Serializer { get; set; }
         public LoadBalancingClient PhotonClient => _photonClient;
         
@@ -32,10 +33,23 @@ namespace Skaillz.Ubernet.Providers.Photon
         public IClient Server => _server;
         public IReadOnlyList<IClient> Clients => _clients;
 
-        public bool IsConnected => _photonClient.State == ClientState.Joined;
+        public bool IsConnected => _photonClient.State == ClientState.Joined && _photonClient.IsConnectedAndReady;
         public double ServerTime => _photonClient.loadBalancingPeer.ServerTimeInMilliSeconds / 1000.0;
 
         public bool SupportsHostMigration => true;
+
+        public bool SendEvents
+        {
+            get
+            {
+                return _sendEvents;
+            }
+            set
+            {
+                _photonClient.loadBalancingPeer.IsSendingOnlyAcks = !value;
+                _sendEvents = value;
+            }
+        }
 
         public IObservable<DisconnectReason> OnDisconnected => _disconnectedSubject.AsObservable();
         public IObservable<IClient> OnClientJoin => _playerJoinedSubject.AsObservable();
@@ -58,15 +72,15 @@ namespace Skaillz.Ubernet.Providers.Photon
             FillRoom();
         }
 
-       /// <inheritdoc cref="Skaillz.Ubernet.IDisconnectable.Disconnect()"/>
         public void Update()
         {
-            if (_photonClient.State != ClientState.Disconnected)
+            if (_photonClient.State != ClientState.Disconnected && SendEvents)
             {
                 _photonClient.Service();
             }
         }
 
+        /// <inheritdoc cref="Skaillz.Ubernet.IDisconnectable.Disconnect()"/>
         public IObservable<IConnection> Disconnect()
         {
             var observable = PhotonUtils.CreateObservableForExpectedStateChange(_photonClient,
@@ -143,7 +157,7 @@ namespace Skaillz.Ubernet.Providers.Photon
         {
             _photonClient.OnStateChangeAction += state =>
             {
-                if (state == ClientState.Disconnected)
+                if (state != ClientState.Joined)
                 {
                     var reason = PhotonUtils.ConvertPhotonDisconnectCause(_photonClient.DisconnectedCause);
                     _disconnectedSubject.OnNext(reason);

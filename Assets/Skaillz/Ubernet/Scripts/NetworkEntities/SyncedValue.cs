@@ -23,7 +23,7 @@ namespace Skaillz.Ubernet.NetworkEntities
             get { return _value; }
             set
             {
-                if (_value != value)
+                if (value != _value)
                 {
                     _value = value;
                     SetDirty();
@@ -38,7 +38,7 @@ namespace Skaillz.Ubernet.NetworkEntities
 
         public override string ToString()
         {
-            return _value.ToString();
+            return _value == null ? "null" : _value.ToString();
         }
     }
     

@@ -25,7 +25,11 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
         public int Id
         {
             get { return _id; }
-            set { _id = value; }
+            set
+            {
+                _entity.Id = value;
+                _id = value;
+            }
         }
 
         public int OwnerId
@@ -92,7 +96,15 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 
         public void OnRemove()
         {
-            Destroy(gameObject);
+            if (gameObject != null)
+            {
+                Destroy(gameObject);
+            }
+        }
+
+        protected virtual void OnDestroy()
+        {
+            Manager?.UnregisterEntity(Id, false);
         }
 
         public override string ToString()
@@ -101,16 +113,19 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
         }
         
 #if UNITY_EDITOR
-        private void Reset()
+        public void Reset()
         {
-            // Auto-assign an ID that is valid in the scene
-            int maxId = Resources.FindObjectsOfTypeAll<GameObjectNetworkEntityBase>()
-                .Select(entity => entity.Id)
-                .Max();
-
-            checked
+            if (gameObject.scene.name != null)
             {
-                Id = Math.Max(NetworkEntityManager.MinSafeEntityId, maxId + 1);
+                // Auto-assign an ID that is valid in the scene
+                int maxId = Resources.FindObjectsOfTypeAll<GameObjectNetworkEntityBase>()
+                    .Select(entity => entity.Id)
+                    .Max();
+
+                checked
+                {
+                    Id = Math.Max(NetworkEntityManager.MinSafeEntityId, maxId + 1);
+                }
             }
         }
 

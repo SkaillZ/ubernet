@@ -1,10 +1,18 @@
+using System;
+using System.IO;
+using Skaillz.Ubernet.DefaultSerializers.Unity;
 using Skaillz.Ubernet.NetworkEntities;
 using Skaillz.Ubernet.NetworkEntities.Unity;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Skaillz.Ubernet
 {
     public static class UnityUtils
     {
+        internal static readonly Vector3Serializer Vector3Serializer = new Vector3Serializer();
+        internal static readonly QuaternionSerializer QuaternionSerializer = new QuaternionSerializer();
+        
         /// <summary>
         /// The singleton <see cref="NetworkEntityManager"/> used by <see cref="GameObjectNetworkEntity"/> by default.
         /// </summary>
@@ -14,6 +22,134 @@ namespace Skaillz.Ubernet
         {
             EntityManager = entityManager;
             return entityManager;
+        }
+        
+        /// <summary>
+        /// Instantiates the Unity prefab and sends a creation event to remote players.
+        /// </summary>
+        /// <param name="manager">The <see cref="NetworkEntityManager"/> to instantiate the entity on</param>
+        /// <param name="prefab">The Prefab that should be instantiated as a NetworkEntity</param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">If no <see cref="GameObjectNetworkEntityBase"/> component
+        /// is attached to the prefab</exception>
+        /*public static GameObjectNetworkEntityBase InstantiateFromPrefab(this NetworkEntityManager manager, GameObject prefab)
+        {
+            // HACK: set static property to avoid auto-instantiation
+            GameObjectNetworkEntity.AutoRegister = false;
+
+            try
+            {
+                var go = Object.Instantiate(prefab);
+                
+                var entity = go.GetComponent<GameObjectNetworkEntityBase>();
+                if (entity == null)
+                {
+                    throw new InvalidOperationException($"Prefabs instantiated on a {nameof(NetworkEntityManager)} " +
+                                                        $"must have a {nameof(GameObjectNetworkEntityBase)} component attached to them.");
+                }
+
+                manager.InstantiateEntity(entity);
+                return entity;
+            }
+            finally
+            {
+                GameObjectNetworkEntity.AutoRegister = true;
+            }
+        }*/
+
+        public static GameObjectNetworkEntityBase InstantiateFromResourcePrefab(this NetworkEntityManager manager,
+            string path, Vector3 position = default(Vector3), Quaternion rotation = default(Quaternion))
+        {
+            GameObjectNetworkEntity.AutoRegister = false;
+            
+            try
+            {
+                var prefab = Resources.Load(path) as GameObject;
+                if (prefab == null)
+                {
+                    throw new InvalidOperationException($"Prefab could not be loaded from path: '{path}'");
+                }
+                
+                if (prefab.GetComponent<GameObjectNetworkEntityBase>() == null)
+                {
+                    throw new InvalidOperationException($"Prefabs instantiated on a {nameof(NetworkEntityManager)} " +
+                                                        $"must have a {nameof(GameObjectNetworkEntityBase)} component attached to them.");
+                }
+
+                var go = Object.Instantiate(prefab, position, rotation);
+                var entity = go.GetComponent<GameObjectNetworkEntityBase>();
+
+                entity.Id = manager.CreateEntityId();
+                entity.OwnerId = manager.LocalPlayer.ClientId;
+
+                using (var stream = new MemoryStream())
+                {
+                    var helper = new SerializationHelper();
+                    helper.SerializeInt(entity.Id, stream);
+                    helper.SerializeInt(entity.OwnerId, stream);
+                    helper.SerializeString(path, stream);
+                    
+                    Vector3Serializer.Serialize(position, stream);
+                    QuaternionSerializer.Serialize(rotation, stream);
+                    
+                    manager.SendEvent(DefaultEvents.NetworkEntityCreateFromResource, stream.ToArray());
+                }
+
+                manager.RegisterEntity(entity);
+                return entity;
+            }
+            finally
+            {
+                GameObjectNetworkEntity.AutoRegister = true;
+            }
+        }
+        
+        public static GameObjectNetworkEntityBase InstantiateFromPrefab(this NetworkEntityManager manager,
+            GameObject prefab, Vector3 position = default(Vector3), Quaternion rotation = default(Quaternion))
+        {
+            GameObjectNetworkEntity.AutoRegister = false;
+            
+            try
+            {
+                var prefabCache = PrefabCache.GetPrefabCache();
+                int cacheIndex = prefabCache.GetPrefabIndex(prefab);
+                if (cacheIndex == -1)
+                {
+                    throw new InvalidOperationException("The given prefab is not in the prefab cache. Please add it and try again.");
+                }
+                
+                if (prefab.GetComponent<GameObjectNetworkEntityBase>() == null)
+                {
+                    throw new InvalidOperationException($"Prefabs instantiated on a {nameof(NetworkEntityManager)} " +
+                                                        $"must have a {nameof(GameObjectNetworkEntityBase)} component attached to them.");
+                }
+
+                var go = Object.Instantiate(prefab, position, rotation);
+                var entity = go.GetComponent<GameObjectNetworkEntityBase>();
+
+                entity.Id = manager.CreateEntityId();
+                entity.OwnerId = manager.LocalPlayer.ClientId;
+
+                using (var stream = new MemoryStream())
+                {
+                    var helper = new SerializationHelper();
+                    helper.SerializeInt(entity.Id, stream);
+                    helper.SerializeInt(entity.OwnerId, stream);
+                    helper.SerializeInt(cacheIndex, stream);
+                    
+                    Vector3Serializer.Serialize(position, stream);
+                    QuaternionSerializer.Serialize(rotation, stream);
+                    
+                    manager.SendEvent(DefaultEvents.NetworkEntityCreateFromPrefabCache, stream.ToArray());
+                }
+
+                manager.RegisterEntity(entity);
+                return entity;
+            }
+            finally
+            {
+                GameObjectNetworkEntity.AutoRegister = true;
+            }
         }
     }
 }

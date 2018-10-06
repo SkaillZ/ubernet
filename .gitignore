@@ -10,6 +10,8 @@ Assets/LocalTest*
 Assets/InitTestScene*
 Assets/Plugins/Editor/JetBrains*
 Assets/Plugins/UniRx/Examples*
+Assets/Standard Assets*
+Assets/SampleScenes*
 
 # Visual Studio cache directory
 .vs/

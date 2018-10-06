@@ -28,12 +28,13 @@ namespace Skaillz.Ubernet.Tests.IT
         public IEnumerator CreatesEntity_OnOtherClient()
         {
             yield return Connect();
+            _manager.SetLocalPlayer(new TestPlayer());
 
             var entity = new NetworkEntity(1, _manager.Connection.LocalClient.ClientId);
             _manager.InstantiateEntity(entity);
 
             yield return UpdateUntilSubscription(_manager2.OnEntityCreated);
-            Assert.AreEqual(_manager2.Entities.First().Id, 1);
+            Assert.AreEqual(1, _manager2.Entities.Count);
             
             yield return Disconnect();
         }
@@ -42,13 +43,14 @@ namespace Skaillz.Ubernet.Tests.IT
         public IEnumerator DestroysEntity_OnOtherClient()
         {
             yield return Connect();
+            _manager.SetLocalPlayer(new TestPlayer());
 
             var entity = new NetworkEntity(1, _manager.Connection.LocalClient.ClientId);
             _manager.InstantiateEntity(entity);
             _manager.DestroyEntity(entity.Id);
 
             yield return UpdateUntilSubscription(_manager2.OnEntityDestroyed);
-            Assert.AreEqual(_manager2.Entities.Count, 0);
+            Assert.AreEqual(0, _manager2.Entities.Count);
             
             yield return Disconnect();
         }
@@ -57,6 +59,8 @@ namespace Skaillz.Ubernet.Tests.IT
         public IEnumerator CreatesComponentOnEntity_OnOtherClient()
         {
             yield return Connect();
+
+            _manager.SetLocalPlayer(new TestPlayer());
 
             var entity = new NetworkEntity(1, _manager.Connection.LocalClient.ClientId);
             _manager.InstantiateEntity(entity);
@@ -78,6 +82,8 @@ namespace Skaillz.Ubernet.Tests.IT
         {
             yield return Connect();
 
+            _manager.SetLocalPlayer(new TestPlayer());
+
             var entity = new NetworkEntity(1, _manager.Connection.LocalClient.ClientId);
             _manager.InstantiateEntity(entity);
 
@@ -98,6 +104,8 @@ namespace Skaillz.Ubernet.Tests.IT
         public IEnumerator UpdatesComponentOnEntity_OnOtherClient()
         {
             yield return Connect();
+
+            _manager.SetLocalPlayer(new TestPlayer());
 
             var entity = new NetworkEntity(1, _manager.Connection.LocalClient.ClientId);
             _manager.InstantiateEntity(entity);

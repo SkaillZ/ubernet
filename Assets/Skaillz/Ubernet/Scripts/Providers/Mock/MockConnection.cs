@@ -15,7 +15,7 @@ namespace Skaillz.Ubernet.Providers.Mock
         
         public ISerializer Serializer { get; set; }
         
-        public IClient LocalClient { get; private set; } = new Client(-1);
+        public IClient LocalClient { get; private set; } = new Client(1);
 
         public IClient Server => Network?.Server?.LocalClient ?? LocalClient;
 
@@ -24,11 +24,12 @@ namespace Skaillz.Ubernet.Providers.Mock
             : new List<IClient>(new []{ LocalClient });
         
         public MockNetwork Network { get; set; }
-        public bool IsConnected { get; private set; }
+        public bool IsConnected { get; private set; } = true;
         
         public double ServerTime => throw new NotImplementedException($"Server time is not implemented on {nameof(MockConnection)}.");
 
         public bool SupportsHostMigration => true;
+        public bool SendEvents { get; set; } = true;
 
         public IObservable<DisconnectReason> OnDisconnected => _disconnectedSubject.AsObservable();
         public IObservable<IClient> OnClientJoin => _playerJoinedSubject.AsObservable();
@@ -36,18 +37,14 @@ namespace Skaillz.Ubernet.Providers.Mock
         public IObservable<IClient> OnHostMigration => _hostMigratedSubject.AsObservable();
         public IObservable<NetworkEvent> OnEvent => _eventSubject.AsObservable();
         
+        private readonly bool _actAsServer;
         private readonly Queue<NetworkEvent> _sendQueue = new Queue<NetworkEvent>();
         private readonly Queue<byte[]> _receiveQueue = new Queue<byte[]>();
-
-        public MockConnection(ISerializer serializer, MockNetwork network = null, bool actAsServer = false)
-            : this(network, actAsServer)
-        {
-            Serializer = serializer;
-        }
         
-        public MockConnection(MockNetwork network = null, bool actAsServer = false)
+        public MockConnection(bool actAsServer, MockNetwork network = null, ISerializer serializer = null)
         {
-            Serializer = Serializer ?? new Serializer();
+            _actAsServer = actAsServer;
+            Serializer = serializer ?? new Serializer();
             Network = network;
             Network?.Connect(this, actAsServer);
         }
@@ -91,6 +88,11 @@ namespace Skaillz.Ubernet.Providers.Mock
         
         public void Update()
         {
+            if (!SendEvents)
+            {
+                return;
+            }
+            
             while (_sendQueue.Count > 0)
             {
                 var evt = _sendQueue.Dequeue();
@@ -98,7 +100,7 @@ namespace Skaillz.Ubernet.Providers.Mock
                 {
                     Network.SendEvent(evt, Serializer);
                 }
-                else if (evt.Target == MessageTarget.AllPlayers)
+                else if (evt.Target == MessageTarget.AllPlayers || evt.Target == MessageTarget.Server && _actAsServer)
                 {
                     // TODO: support ID resolvables
                     _receiveQueue.Enqueue(Serializer.Serialize(evt));
@@ -123,7 +125,7 @@ namespace Skaillz.Ubernet.Providers.Mock
             {
                 Clients.Add(connection);
                 
-                connection.LocalClient.ClientId = Math.Max(Clients.Max(c => c.LocalClient.ClientId), 0) + 1;
+                connection.LocalClient.ClientId = Math.Max(Clients.Max(c => c.LocalClient.ClientId), 1) + 1;
                 if (Server == null || asServer)
                 {
                     Server = connection;

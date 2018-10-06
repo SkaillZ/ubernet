@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UniRx;
+using UnityEngine;
 
 namespace Skaillz.Ubernet.NetworkEntities
 {
@@ -25,6 +26,11 @@ namespace Skaillz.Ubernet.NetworkEntities
 
         public IObservable<INetworkComponent> OnComponentAdd => _componentAddSubject.AsObservable();
         public IObservable<INetworkComponent> OnComponentRemove => _componentRemoveSubject.AsObservable();
+
+        public NetworkEntity()
+        {
+            
+        }
 
         public NetworkEntity(int id, int ownerId = -1)
         {
@@ -68,7 +74,9 @@ namespace Skaillz.Ubernet.NetworkEntities
             }
             
             var component = _components[componentId];
+            component.Entity = null;
             (component as IRegistrationCallbacks)?.OnRemove();
+            
             _components.Remove(componentId);
             _componentCaches.Remove(componentId);
             _componentRemoveSubject.OnNext(component);
@@ -78,9 +86,9 @@ namespace Skaillz.Ubernet.NetworkEntities
 
         public virtual void RemoveAllNetworkComponents()
         {
-            foreach (var component in _components.Values)
+            foreach (short componentId in _components.Keys.ToArray())
             {
-                RemoveNetworkComponent(component);
+                RemoveNetworkComponent(componentId);
             }
         }
 

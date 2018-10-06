@@ -51,6 +51,12 @@ namespace Skaillz.Ubernet
         bool SupportsHostMigration { get; }
         
         /// <summary>
+        /// Determines if any events should be sent over the network. Events can be paused by setting this property to false
+        /// (useful while switching scenes)
+        /// </summary>
+        bool SendEvents { get; set; }
+        
+        /// <summary>
         /// An observable which subscriptions are called when the connection is dropped, e.g. by a timeout, calling
         /// <see cref="IConnection.Disconnect()"/>, etc.
         /// </summary>

@@ -32,5 +32,10 @@ namespace Skaillz.Ubernet
         {
             return ClientId;
         }
+
+        public override string ToString()
+        {
+            return $"{nameof(ClientId)}: {ClientId}";
+        }
     }
 }

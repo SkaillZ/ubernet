@@ -15,10 +15,15 @@ namespace Skaillz.Ubernet.Tests.IT
 
         public static string GetPhotonAppId()
         {
+            #if UNITY_EDITOR
             string id = EditorPrefs.GetString(AppIdPrefKey, null);
+            #else
+            string id = null;
+            #endif
+            
             if (string.IsNullOrEmpty(id))
             {
-                throw new Exception($"Invalid App ID in EditorPrefs key {AppIdPrefKey}. Set it first in Ubernet Developer options");
+                throw new Exception($"Invalid App ID in EditorPrefs key {AppIdPrefKey}. Set it in Ubernet Developer options first");
             }
             return id;
         }

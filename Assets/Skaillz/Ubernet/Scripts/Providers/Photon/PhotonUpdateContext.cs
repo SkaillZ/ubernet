@@ -1,4 +1,5 @@
 using System;
+using ExitGames.Client.Photon;
 using UniRx;
 
 namespace Skaillz.Ubernet.Providers.Photon
@@ -11,7 +12,7 @@ namespace Skaillz.Ubernet.Providers.Photon
         /// <summary>
         /// The default number of times per second the Update method is called
         /// </summary>
-        public const int DefaultTickRate = 15;
+        public const int DefaultTickRate = 10;
         
         private readonly PhotonMatchmaker _matchmaker;
         private PhotonSettings _settings;
@@ -60,6 +61,12 @@ namespace Skaillz.Ubernet.Providers.Photon
         public PhotonUpdateContext WithRegion(string region)
         {
             _settings.Region = region;
+            return this;
+        }
+        
+        public PhotonUpdateContext WithProtocol(ConnectionProtocol protocol)
+        {
+            _settings.Protocol = protocol;
             return this;
         }
  

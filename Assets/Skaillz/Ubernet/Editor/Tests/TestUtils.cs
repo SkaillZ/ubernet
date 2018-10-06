@@ -81,12 +81,12 @@ namespace Skaillz.Ubernet.Tests
 
         public static NetworkEntityManager CreateManagerWithMasterMockService()
         {
-            return new NetworkEntityManager(new MockConnection(MockConnection.MockNetwork.Default, true));
+            return new NetworkEntityManager(new MockConnection(true, MockConnection.MockNetwork.Default));
         }
 
         public static NetworkEntityManager CreateManagerWithSlaveMockService()
         {
-            return new NetworkEntityManager(new MockConnection(MockConnection.MockNetwork.Default));
+            return new NetworkEntityManager(new MockConnection(false, MockConnection.MockNetwork.Default));
 
         }
     }

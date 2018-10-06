@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics.Eventing.Reader;
 using ExitGames.Client.Photon.LoadBalancing;
 using NUnit.Framework;
+using Skaillz.Ubernet.Providers.LiteNetLib;
 using Skaillz.Ubernet.Providers.Mock;
 using Skaillz.Ubernet.Providers.Photon;
 using UniRx;
@@ -15,7 +16,8 @@ namespace Skaillz.Ubernet.Tests.IT
         protected enum Providers
         {
             Mock,
-            Photon
+            Photon,
+            LiteNetLib
         }
 
         protected Providers Provider;
@@ -42,6 +44,11 @@ namespace Skaillz.Ubernet.Tests.IT
         protected void UseMock()
         {
             Provider = Providers.Mock;
+        }
+        
+        protected void UseLiteNetLib()
+        {
+            Provider = Providers.LiteNetLib;
         }
         
         protected virtual IEnumerator Connect()
@@ -81,8 +88,13 @@ namespace Skaillz.Ubernet.Tests.IT
             }
             else if (Provider == Providers.Mock)
             {
-                _connection = new MockConnection(MockConnection.MockNetwork.Default, true);
-                _connection2 = new MockConnection(MockConnection.MockNetwork.Default);
+                _connection = new MockConnection(true, MockConnection.MockNetwork.Default);
+                _connection2 = new MockConnection(false, MockConnection.MockNetwork.Default);
+            }
+            else if (Provider == Providers.LiteNetLib)
+            {
+                _connection = LiteNetLibConnection.CreateServer(5000, 2, "0.1", false);
+                _connection2 = LiteNetLibConnection.CreateClient("localhost", 5000, 2, "0.1", false);
             }
         }
 
@@ -132,11 +144,32 @@ namespace Skaillz.Ubernet.Tests.IT
             {
                 if (num == 0)
                 {
-                    _connection = new MockConnection(MockConnection.MockNetwork.Default, true);
+                    _connection = new MockConnection(true, MockConnection.MockNetwork.Default);
                 }
                 else
                 {
-                    _connection2 = new MockConnection(MockConnection.MockNetwork.Default);
+                    _connection2 = new MockConnection(false, MockConnection.MockNetwork.Default);
+                }
+            }
+            else if (Provider == Providers.LiteNetLib)
+            {
+                IConnection connection;
+                if (create)
+                {
+                    connection = LiteNetLibConnection.CreateServer(5000, 2, "0.1", false);
+                }
+                else
+                {
+                    connection = LiteNetLibConnection.CreateClient("localhost", 5000, 2, "0.1", false);
+                }
+
+                if (num == 0)
+                {
+                    _connection = connection;
+                }
+                else
+                {
+                    _connection2 = connection;
                 }
             }
         }

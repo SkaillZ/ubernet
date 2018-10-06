@@ -16,6 +16,9 @@ namespace Skaillz.Ubernet.Tests
         {
             _manager = TestUtils.CreateManagerWithMasterMockService();
             _manager2 = TestUtils.CreateManagerWithSlaveMockService();
+
+            _manager.SetLocalPlayer(new DefaultPlayer());
+            _manager2.SetLocalPlayer(new DefaultPlayer());
         }
 
         [Test]

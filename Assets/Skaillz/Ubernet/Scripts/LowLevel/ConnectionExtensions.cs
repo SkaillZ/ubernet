@@ -7,6 +7,11 @@ namespace Skaillz.Ubernet
     public static class ConnectionExtensions
     {
         /// <summary>
+        /// The default number of times per second the Update method is called
+        /// </summary>
+        public const int DefaultTickRate = 20;
+        
+        /// <summary>
         /// Sends an event with the given code and data to all other clients.
         /// </summary>
         /// <param name="connection">The connection to send the event from</param>
@@ -37,6 +42,18 @@ namespace Skaillz.Ubernet
         public static bool IsServer(this IConnection connection, IClient client)
         {
             return client.ClientId == connection.Server.ClientId;
+        }
+
+        public static T AutoUpdate<T>(this T connection, float tickRate = DefaultTickRate) where T : IConnection
+        {
+            Observable.Interval(TimeSpan.FromMilliseconds(1f / tickRate))
+                .TakeWhile(_ => connection.IsConnected)
+                .Subscribe(_ =>
+                {
+                    connection.Update();
+                });
+            
+            return connection;
         }
     }
 }

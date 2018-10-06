@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using UniRx;
+using UnityEngine;
 
 namespace Skaillz.Ubernet.NetworkEntities
 {
@@ -97,10 +98,10 @@ namespace Skaillz.Ubernet.NetworkEntities
             
             _rpcSubscription = _context.Entity.Manager.OnEvent(DefaultEvents.Rpc)
                 .Select(evt => (RpcCall) evt.Data)
-                .Where(rpc => rpc.EntityId == _context.Entity.Id
-                              && rpc.ComponentId == _context.Id)
+                .Where(rpc => rpc.EntityId == _context.Entity.Id && rpc.ComponentId == _context.Id)
                 .Subscribe(rpc =>
                 {
+                    Debug.Log("Got RPC: componentID " + rpc.ComponentId + ", entityId: " + rpc.EntityId);
                     var method = _rpcCodeLookup[rpc.RpcCode];
                     method.Invoke(_context, rpc.Params);
                 });
@@ -121,6 +122,7 @@ namespace Skaillz.Ubernet.NetworkEntities
                 RpcCode = _rpcMethodLookup[name],
                 Params = parameters
             };
+            Debug.Log("Send RPC: componentID " + call.ComponentId + ", entityId: " + call.EntityId);
             _context.Entity.Manager.SendEvent(DefaultEvents.Rpc, call, target, reliable);
         }
 

@@ -44,19 +44,15 @@ namespace Skaillz.Ubernet.Providers.Photon
             return new PhotonUpdateContext(new PhotonMatchmaker());
         }
 
-        protected PhotonMatchmaker()
-        {
-        }
-
         /// <summary>
         /// Creates a new matchmaker with the given Photon <see cref="LoadBalancingClient"/>
         /// </summary>
         /// Since you have to call <see cref="Update"/> manually, it is recommended to create an instance with
         /// <see cref="NewContext"/> instead
         /// <param name="loadBalancingClient">The Photon client</param>
-        public PhotonMatchmaker(LoadBalancingClient loadBalancingClient)
+        public PhotonMatchmaker(LoadBalancingClient loadBalancingClient = null)
         {
-            _photonClient = loadBalancingClient;
+            _photonClient = loadBalancingClient ?? new LoadBalancingClient();
             InitializeEvents();
         }
         
@@ -93,6 +89,7 @@ namespace Skaillz.Ubernet.Providers.Photon
             _photonClient.AutoJoinLobby = false;
             _photonClient.AppId = settings.AppId;
             _photonClient.AppVersion = settings.AppVersion;
+            _photonClient.TransportProtocol = settings.Protocol;
 
             _photonSettings = settings;
 
@@ -237,10 +234,11 @@ namespace Skaillz.Ubernet.Providers.Photon
 
         /// <summary>
         /// Sends and receives messages by calling <see cref="LoadBalancingClient.Service"/> on the Photon client.
+        /// <see cref="PhotonRoomConnection.Update"/> must be called on the connection while in-game.
         /// </summary>
         public virtual void Update()
         {
-            if (State != ConnectionState.Disconnected)
+            if (State != ConnectionState.Disconnected && _photonClient.State != ClientState.Joined)
             {
                 _photonClient.Service();
             }

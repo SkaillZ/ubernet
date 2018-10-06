@@ -13,5 +13,8 @@
         public const byte PlayerUpdate = 247;
         
         public const byte Rpc = 250;
+
+        public const byte NetworkEntityCreateFromResource = 251;
+        public const byte NetworkEntityCreateFromPrefabCache = 252;
     }
 }

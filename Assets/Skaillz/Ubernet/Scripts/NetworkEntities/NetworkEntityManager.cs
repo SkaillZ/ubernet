@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using JetBrains.Annotations;
+using Skaillz.Ubernet.NetworkEntities.Unity;
 using UniRx;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Skaillz.Ubernet.NetworkEntities
 {
@@ -14,7 +17,8 @@ namespace Skaillz.Ubernet.NetworkEntities
         /// </summary>
         public const int DefaultSerializationRate = 20;
         public const int MinSafeEntityId = 1000000;
-        private const double PlayerListTimeout = 5000.0;
+        public const int MaxEntitiesPerPlayer = MinSafeEntityId / 1000;
+        private const double PlayerListTimeout = 10000.0;
 
         private readonly SerializationHelper _helper = new SerializationHelper();
         private readonly Dictionary<int, INetworkEntity> _entities = new Dictionary<int, INetworkEntity>();
@@ -23,7 +27,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         private IPlayer _localPlayer;
         private byte[] _localPlayerCache;
 
-        private int _nextEntityId = 1;
+        private int _nextEntityId;
         private IDisposable _eventSubscription;
         private IDisposable _playerBroadcastSubscription;
 
@@ -171,45 +175,31 @@ namespace Skaillz.Ubernet.NetworkEntities
         /// </summary>
         /// Registers an entity and sends the creation event to all other clients.
         /// <param name="entity">The entity that should be instantiated</param>
+        /// <param name="ownedByScene">
+        /// If false, the newly created entity will be owned by the local player. If true, it will be owned by the scene,
+        /// which means that it's always controlled by the server.
+        /// </param>
         /// <exception cref="ArgumentNullException">If the entity is null</exception>
         /// <exception cref="OverflowException">If the entity manager has run out of usable IDs since too many entities
         /// have been created</exception>
-        public virtual void InstantiateEntity([NotNull] INetworkEntity entity)
+        public virtual void InstantiateEntity([NotNull] INetworkEntity entity, bool ownedByScene = false)
         {
             if (entity == null)
             {
                 throw new ArgumentNullException(nameof(entity), "Entity must not be null.");
             }
-            
-            if (_nextEntityId + 1 >= MinSafeEntityId)
-            {
-                // Try to find an unused safe ID
-                bool foundSafeId = false;
-                for (_nextEntityId = 1; _nextEntityId < MinSafeEntityId; _nextEntityId++)
-                {
-                    if (!_entities.ContainsKey(_nextEntityId))
-                    {
-                        foundSafeId = true;
-                        break;
-                    }
-                }
 
-                if (!foundSafeId)
-                {
-                    throw new OverflowException($"Too many entities have been created. The maximum number of " +
-                                                $"entities that can be automatically created is {MinSafeEntityId - 1}.");
-                }
-            }
-
-            entity.Id = _nextEntityId++;
+            entity.Id = CreateEntityId();
             
             if (_entities.ContainsKey(entity.Id))
             {
                 throw new InvalidOperationException($"An entity with ID {entity.Id} has already been registered.");
             }
 
-            RegisterEntity(entity);
+            entity.OwnerId = ownedByScene ? -1 : _connection.LocalClient.ClientId;
+
             BroadcastEntityCreation(entity);
+            RegisterEntity(entity);
         }
 
         /// <summary>
@@ -221,6 +211,16 @@ namespace Skaillz.Ubernet.NetworkEntities
         {
             UnregisterEntity(id, true);
             _connection?.SendEvent(DefaultEvents.NetworkEntityDestroy, id);
+        }
+        
+        /// <summary>
+        /// Destroys given entity on all clients.
+        /// </summary>
+        /// Unregisters the given entity and sends its destroy event to all other clients.
+        /// <param name="entity">The entity to destroy</param>
+        public void DestroyEntity(INetworkEntity entity)
+        {
+            DestroyEntity(entity.Id);
         }
         
         
@@ -297,8 +297,6 @@ namespace Skaillz.Ubernet.NetworkEntities
             
             _entities[entity.Id] = entity;
             entity.Manager = this;
-            
-            (entity as IRegistrationCallbacks)?.OnRegister();
 
             entity.OnComponentAdd
                 .Subscribe(component =>
@@ -317,6 +315,9 @@ namespace Skaillz.Ubernet.NetworkEntities
                         BroadcastLocalComponentRemove(entity, component);
                     }
                 });
+            
+            (entity as IRegistrationCallbacks)?.OnRegister();
+            Debug.Log("Registered entity: " + entity);
         }
 
         /// <summary>
@@ -329,6 +330,55 @@ namespace Skaillz.Ubernet.NetworkEntities
         public void DestroyPlayerEntities(IPlayer player)
         {
             DestroyPlayerEntities(player.ClientId);
+        }
+        
+        /// <summary>
+        /// Returns an unused entity ID that can be assigned to new entities
+        /// </summary>
+        /// <exception cref="OverflowException">If the maximum number of entities has been exceeded</exception>
+        public virtual int CreateEntityId(bool ownedByScene = false)
+        {
+            // TODO: this doesn't support scene objects well enough (only one next entity ID is saved)
+            int ownerId = ownedByScene ? -1 : _localPlayer.ClientId;
+            int firstEntityId = (ownerId + 1) * MaxEntitiesPerPlayer;
+            
+            if (_nextEntityId + 1 >= MinSafeEntityId 
+                || _nextEntityId + 1 >= firstEntityId + MaxEntitiesPerPlayer 
+                || _nextEntityId <= 0
+                || _nextEntityId < firstEntityId)
+            {
+                _nextEntityId = firstEntityId;
+            }
+
+            // Try to find an unused safe ID
+            bool foundSafeId = false;
+            for (; _nextEntityId < firstEntityId + MaxEntitiesPerPlayer && _nextEntityId < MinSafeEntityId; _nextEntityId++)
+            {
+                if (!_entities.ContainsKey(_nextEntityId))
+                {
+                    foundSafeId = true;
+                    break;
+                }
+            }
+
+            if (!foundSafeId)
+            {
+                throw new OverflowException($"Too many entities have been created. The maximum number of " +
+                                            $"entities that can be automatically created is {MinSafeEntityId - 1}.");
+            }
+
+            
+            return _nextEntityId;
+        }
+
+        /// <summary>
+        /// Returns if the given entity is registered at this manager
+        /// </summary>
+        /// <param name="entity">The entity to get the registration status for</param>
+        /// <returns>True if the entity is registered</returns>
+        public bool IsEntityRegistered(INetworkEntity entity)
+        {
+            return _entities.ContainsKey(entity.Id);
         }
         
         private void SendEntityAndPlayerUpdates()
@@ -410,7 +460,6 @@ namespace Skaillz.Ubernet.NetworkEntities
 
             _connection.OnClientLeave.Subscribe(client =>
             {
-                
                 // Remove the player
                 if (DestroyPlayersAfterLeave)
                 {
@@ -466,6 +515,7 @@ namespace Skaillz.Ubernet.NetworkEntities
             {
                 _helper.SerializeInt(entity.Id, stream);
                 _helper.SerializeInt(entity.OwnerId, stream);
+                _helper.SerializeString(entity.GetType().AssemblyQualifiedName, stream);
                 _connection.SendEvent(DefaultEvents.NetworkEntityCreate, stream.ToArray());
             }
         }
@@ -475,14 +525,105 @@ namespace Skaillz.Ubernet.NetworkEntities
             INetworkEntity entity;
             using (var stream = new MemoryStream(entityData))
             {
-                entity = new NetworkEntity(_helper.DeserializeInt(stream), _helper.DeserializeInt(stream));
-            }
+                int id = _helper.DeserializeInt(stream);
+                int ownerId = _helper.DeserializeInt(stream);
+                string typeName = _helper.DeserializeString(stream);
 
+                var type = Type.GetType(typeName);
+                if (type.IsSubclassOf(typeof(GameObjectNetworkEntityBase)))
+                {
+                    var go = new GameObject($"Remote NetworkEntity #{id}");
+                    entity = (INetworkEntity) go.AddComponent(type);
+                }
+                else
+                {
+                    entity = (INetworkEntity) Activator.CreateInstance(type);
+                }
+
+                entity.Id = id;
+                entity.OwnerId = ownerId;
+            }
+            
             RegisterEntity(entity);
             _entityCreatedSubject.OnNext(entity);
         }
+        
+        private void RegisterRemoteEntityFromResource(byte[] entityData)
+        {
+            INetworkEntity entity;
+            using (var stream = new MemoryStream(entityData))
+            {
+                int id = _helper.DeserializeInt(stream);
+                int ownerId = _helper.DeserializeInt(stream);
+                string path = _helper.DeserializeString(stream);
+                
+                var position = (Vector3) UnityUtils.Vector3Serializer.Deserialize(stream);
+                var rotation = (Quaternion) UnityUtils.QuaternionSerializer.Deserialize(stream);
 
-        private void UnregisterEntity(int id, bool checkLocalOwner)
+                var prefab = Resources.Load(path) as GameObject;
+                if (prefab == null)
+                {
+                    throw new InvalidOperationException($"Prefab from remote instantiation could not be loaded from path: '{path}'");
+                }
+                
+                if (prefab.GetComponent<GameObjectNetworkEntityBase>() == null)
+                {
+                    throw new InvalidOperationException($"Prefabs instantiated on a {nameof(NetworkEntityManager)} " +
+                                                        $"must have a {nameof(GameObjectNetworkEntityBase)} component attached to them.");
+                }
+
+                GameObjectNetworkEntity.AutoRegister = false;
+                var go = Object.Instantiate(prefab, position, rotation);
+                entity = go.GetComponent<GameObjectNetworkEntityBase>();
+
+                entity.Id = id;
+                entity.OwnerId = ownerId;
+            }
+            
+            RegisterEntity(entity);
+            GameObjectNetworkEntity.AutoRegister = true;
+            _entityCreatedSubject.OnNext(entity);
+        }
+        
+        private void RegisterRemoteEntityFromPrefabCache(byte[] entityData)
+        {
+            INetworkEntity entity;
+            using (var stream = new MemoryStream(entityData))
+            {
+                int id = _helper.DeserializeInt(stream);
+                int ownerId = _helper.DeserializeInt(stream);
+                int cacheIndex = _helper.DeserializeInt(stream);
+
+                var position = (Vector3) UnityUtils.Vector3Serializer.Deserialize(stream);
+                var rotation = (Quaternion) UnityUtils.QuaternionSerializer.Deserialize(stream);
+
+                var prefab = PrefabCache.GetPrefabCache().GetPrefab(cacheIndex);
+                if (prefab == null)
+                {
+                    throw new InvalidOperationException($"Prefab from remote instantiation could not be loaded from cache.'");
+                }
+                
+                if (prefab.GetComponent<GameObjectNetworkEntityBase>() == null)
+                {
+                    throw new InvalidOperationException($"Prefabs instantiated on a {nameof(NetworkEntityManager)} " +
+                                                        $"must have a {nameof(GameObjectNetworkEntityBase)} component attached to them.");
+                }
+
+                GameObjectNetworkEntity.AutoRegister = false;
+                var go = Object.Instantiate(prefab, position, rotation);
+                entity = go.GetComponent<GameObjectNetworkEntityBase>();
+
+                entity.Id = id;
+                entity.OwnerId = ownerId;
+            }
+            
+            RegisterEntity(entity);
+            GameObjectNetworkEntity.AutoRegister = true;
+            _entityCreatedSubject.OnNext(entity);
+            Debug.Log("Registered remote entity: " + entity);
+        }
+
+        internal void UnregisterEntity(int id, bool checkLocalOwner)
         {
             if (!_entities.ContainsKey(id))
             {
@@ -497,6 +638,8 @@ namespace Skaillz.Ubernet.NetworkEntities
             }
             
             (entity as IRegistrationCallbacks)?.OnRemove();
+
+            entity.Manager = null;
 
             // Remove all components first
             entity.RemoveAllNetworkComponents();
@@ -549,9 +692,27 @@ namespace Skaillz.Ubernet.NetworkEntities
                 throw new InvalidOperationException("Type could not be loaded.");
             }
 
-            var component = (INetworkComponent) Activator.CreateInstance(type);
+            INetworkComponent component;
+            if (type.IsSubclassOf(typeof(MonoNetworkComponent)))
+            {
+                if (!(entity is GameObjectNetworkEntityBase))
+                {
+                    throw new UbernetException($"Adding {nameof(MonoNetworkComponent)}s is only supported on entities of " +
+                                               $"type {nameof(GameObjectNetworkEntityBase)}.");
+                }
+
+                var goEntity = (GameObjectNetworkEntityBase) entity;
+                component = (INetworkComponent) goEntity.gameObject.AddComponent(type);
+            }
+            else
+            {
+                component = (INetworkComponent) Activator.CreateInstance(type);
+            }
+
             component.Id = componentId;
             component.Entity = entity;
+            
+            (component as IRegistrationCallbacks)?.OnRegister();
 
             // Initialize with sent data
             component.Deserialize(stream);
@@ -616,9 +777,12 @@ namespace Skaillz.Ubernet.NetworkEntities
             var player = CreateTypedPlayer();
 
             player.ClientId = _helper.DeserializeInt(stream);
-            player.Deserialize(stream);
 
             _players[player.ClientId] = player;
+
+            player.Manager = this;
+            (player as IRegistrationCallbacks)?.OnRegister();
+            player.Deserialize(stream);
             return player;
         }
 
@@ -684,6 +848,12 @@ namespace Skaillz.Ubernet.NetworkEntities
                     case DefaultEvents.NetworkEntityCreate:
                         RegisterRemoteEntity((byte[]) evt.Data);
                         break;
+                    case DefaultEvents.NetworkEntityCreateFromResource:
+                        RegisterRemoteEntityFromResource((byte[]) evt.Data);
+                        break;
+                    case DefaultEvents.NetworkEntityCreateFromPrefabCache:
+                        RegisterRemoteEntityFromPrefabCache((byte[]) evt.Data);
+                        break;
                     case DefaultEvents.NetworkEntityDestroy:
                         UnregisterEntity((int) evt.Data, false);
                         break;
@@ -696,15 +866,23 @@ namespace Skaillz.Ubernet.NetworkEntities
                     case DefaultEvents.NetworkEntityUpdate:
                         var stream = new MemoryStream((byte[]) evt.Data);
                         int entityId = _helper.DeserializeInt(stream);
-                        var entity = _entities[entityId];
-                        if (entity.IsLocal())
+                        if (_entities.ContainsKey(entityId))
                         {
-                            throw new InvalidOperationException(
-                                $"Remote client tried to update local entity: {entity}");
+                            var entity = _entities[entityId];
+                            if (entity.IsLocal())
+                            {
+                                throw new InvalidOperationException(
+                                    $"Remote client tried to update local entity: {entity}");
+                            }
+
+                            entity.Deserialize(stream);
+                            _entityUpdatedSubject.OnNext(entity);
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"Tried to update unknown entity with ID {entityId}");
                         }
 
-                        entity.Deserialize(stream);
-                        _entityUpdatedSubject.OnNext(entity);
                         break;
                     case DefaultEvents.PlayerUpdate:
                         using (stream = new MemoryStream((byte[]) evt.Data))
@@ -715,7 +893,7 @@ namespace Skaillz.Ubernet.NetworkEntities
                 }
             });
         }
-        
+
         private void RefreshPlayerClientId()
         {
             int oldClientId = _localPlayer.ClientId;

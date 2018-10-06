@@ -1,3 +1,5 @@
+using ExitGames.Client.Photon;
+
 namespace Skaillz.Ubernet.Providers.Photon
 {
     public class PhotonSettings
@@ -17,5 +19,10 @@ namespace Skaillz.Ubernet.Providers.Photon
         /// The region to connect to. That region's Master Server is used to connect to Photon.
         /// </summary>
         public string Region { get; set; }
+
+        /// <summary>
+        /// The transport protocol that should be used to connect to Photon.
+        /// </summary>
+        public ConnectionProtocol Protocol { get; set; }
     }
 }

@@ -13,11 +13,11 @@ namespace Skaillz.Ubernet.NetworkEntities
         /// <param name="entity">The entity to test for</param>
         /// <returns>true if the entity belongs to the local client or false if it belongs to a remote client</returns>
         /// <exception cref="InvalidOperationException">If the Entity is not initialized</exception>
-        public static bool IsLocal([NotNull] this INetworkEntity entity)
+        public static bool IsLocal(this INetworkEntity entity)
         {
-            if (entity.Manager == null)
+            if (entity?.Manager == null)
             {
-                throw new InvalidOperationException("The entity is not initialized.");
+                return false;
             }
             
             var connection = entity.Manager?.Connection;
@@ -65,6 +65,12 @@ namespace Skaillz.Ubernet.NetworkEntities
             manager.Connection?.SendEvent(code, data, target, reliable);
         }
         
+        /// <inheritdoc cref="ConnectionExtensions.SendEvent"/>
+        public static void SendEvent([NotNull] this NetworkEntityManager manager, byte code, object data, bool reliable = true)
+        {
+            manager.Connection?.SendEvent(code, data, reliable);
+        }
+        
         /// <summary>
         /// Returns an observable that can be used to describe to network events of the given code
         /// </summary>
@@ -103,12 +109,32 @@ namespace Skaillz.Ubernet.NetworkEntities
             return entity.Manager?.GetPlayer(entity.OwnerId);
         }
         
+        /// <summary>
+        /// Returns the owning player.
+        /// </summary>
+        /// <param name="entity">The entity to receive the owning player from</param>
+        /// <returns>The player that owns the entity.</returns>
+        public static TPlayerEntity GetOwner<TPlayerEntity>([NotNull] this INetworkEntity entity) where TPlayerEntity : class, IPlayer
+        {
+            return entity.Manager?.GetPlayer(entity.OwnerId) as TPlayerEntity;
+        }
+        
         public static TPlayerEntity GetLocalPlayer<TPlayerEntity>([NotNull] this NetworkEntityManager manager) where TPlayerEntity : class
         {
             return manager.LocalPlayer as TPlayerEntity;
         }
         
-        public static IEnumerable<TPlayerEntity> GetPlayers<TPlayerEntity>([NotNull] this NetworkEntityManager manager) where TPlayerEntity : class
+        public static IPlayer GetServerPlayer([NotNull] this NetworkEntityManager manager)
+        {
+            return manager.GetPlayer(manager.Connection.Server.ClientId);
+        }
+        
+        public static TPlayerEntity GetServerPlayer<TPlayerEntity>([NotNull] this NetworkEntityManager manager) where TPlayerEntity : class, IPlayer
+        {
+            return GetServerPlayer(manager) as TPlayerEntity;
+        }
+        
+        public static IEnumerable<TPlayerEntity> GetPlayers<TPlayerEntity>([NotNull] this NetworkEntityManager manager) where TPlayerEntity : class, IPlayer
         {
             return manager.Players.Cast<TPlayerEntity>();
         }
@@ -143,6 +169,16 @@ namespace Skaillz.Ubernet.NetworkEntities
             int serializationRate = NetworkEntityManager.DefaultSerializationRate)
         {
             return NetworkEntityManager.Create(connection, serializationRate);
+        }
+
+        /// <summary>
+        /// Destroys given entity on all clients.
+        /// </summary>
+        /// Unregisters the given entity and sends its destroy event to all other clients.
+        /// <param name="entity">The entity to destroy</param>
+        public static void Destroy(this INetworkEntity entity)
+        {
+            entity.Manager?.DestroyEntity(entity);
         }
     }
 }
