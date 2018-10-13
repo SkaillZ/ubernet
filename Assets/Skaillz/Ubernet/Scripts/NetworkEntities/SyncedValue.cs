@@ -69,6 +69,17 @@ namespace Skaillz.Ubernet.NetworkEntities
             return (T) syncedValue._value;
         }
     }
+    
+    public sealed class SyncedBool : SyncedValue<bool>
+    {
+        public SyncedBool() : base()
+        {
+        }
+
+        public SyncedBool(bool initialValue) : base(initialValue)
+        {
+        }
+    }
 
     public sealed class SyncedInt : SyncedValue<int>
     {

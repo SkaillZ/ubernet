@@ -23,39 +23,6 @@ namespace Skaillz.Ubernet
             EntityManager = entityManager;
             return entityManager;
         }
-        
-        /// <summary>
-        /// Instantiates the Unity prefab and sends a creation event to remote players.
-        /// </summary>
-        /// <param name="manager">The <see cref="NetworkEntityManager"/> to instantiate the entity on</param>
-        /// <param name="prefab">The Prefab that should be instantiated as a NetworkEntity</param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException">If no <see cref="GameObjectNetworkEntityBase"/> component
-        /// is attached to the prefab</exception>
-        /*public static GameObjectNetworkEntityBase InstantiateFromPrefab(this NetworkEntityManager manager, GameObject prefab)
-        {
-            // HACK: set static property to avoid auto-instantiation
-            GameObjectNetworkEntity.AutoRegister = false;
-
-            try
-            {
-                var go = Object.Instantiate(prefab);
-                
-                var entity = go.GetComponent<GameObjectNetworkEntityBase>();
-                if (entity == null)
-                {
-                    throw new InvalidOperationException($"Prefabs instantiated on a {nameof(NetworkEntityManager)} " +
-                                                        $"must have a {nameof(GameObjectNetworkEntityBase)} component attached to them.");
-                }
-
-                manager.InstantiateEntity(entity);
-                return entity;
-            }
-            finally
-            {
-                GameObjectNetworkEntity.AutoRegister = true;
-            }
-        }*/
 
         public static GameObjectNetworkEntityBase InstantiateFromResourcePrefab(this NetworkEntityManager manager,
             string path, Vector3 position = default(Vector3), Quaternion rotation = default(Quaternion))

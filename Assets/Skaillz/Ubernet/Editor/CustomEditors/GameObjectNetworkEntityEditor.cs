@@ -101,7 +101,6 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
                     for (int i = 0; i < _cacheArray.arraySize && !insertedInFreeSpace; i++)
                     {
                         var elem = _cacheArray.GetArrayElementAtIndex(i);
-                        Debug.Log(elem.objectReferenceInstanceIDValue);
                         if (elem.objectReferenceInstanceIDValue == 0)
                         {
                             elem.objectReferenceInstanceIDValue = entity.gameObject.GetInstanceID();
