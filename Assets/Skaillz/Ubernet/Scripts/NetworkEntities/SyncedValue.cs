@@ -1,13 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using UniRx;
+using UnityEngine;
 
 namespace Skaillz.Ubernet.NetworkEntities
 {
     public abstract class SyncedValue
     {
         protected readonly ISubject<object> _subject = new Subject<object>();
-        protected object _value;
+
+        private object _value;
 
         protected SyncedValue()
         {
@@ -42,21 +43,33 @@ namespace Skaillz.Ubernet.NetworkEntities
         }
     }
     
+    [Serializable]
     public class SyncedValue<T> : SyncedValue, IObservable<T>
     {
-        public SyncedValue()
+        [SerializeField]
+        private T _serializedValue;
+        
+        public SyncedValue() : this(default(T))
         {
-            _value = default(T);
         }
 
         public SyncedValue(T initialValue) : base(initialValue)
         {
+            _serializedValue = initialValue;
+
+            _subject.Subscribe(val =>
+            {
+                _serializedValue = (T) val;
+            });
         }
 
         public T Value
         {
-            get { return (T) _value; }
-            set { ObjectValue = value; }
+            get { return _serializedValue; }
+            set
+            {
+                ObjectValue = value;
+            }
         }
 
         public IDisposable Subscribe(IObserver<T> observer)
@@ -66,7 +79,7 @@ namespace Skaillz.Ubernet.NetworkEntities
 
         public static implicit operator T(SyncedValue<T> syncedValue)
         {
-            return (T) syncedValue._value;
+            return syncedValue._serializedValue;
         }
     }
     
@@ -114,6 +127,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         }
     }
     
+    [Serializable]
     public sealed class SyncedFloat : SyncedValue<float>
     {
         public SyncedFloat() : base()

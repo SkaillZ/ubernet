@@ -158,6 +158,16 @@ namespace Skaillz.Ubernet.NetworkEntities
         {
             return player.Manager?.Entities.Where(entity => entity.OwnerId == player.ClientId);
         }
+        
+        public static T GetNetworkComponent<T>(this INetworkEntity entity) where T : INetworkComponent
+        {
+            return entity.Components.OfType<T>().FirstOrDefault();
+        }
+        
+        public static T[] GetNetworkComponents<T>(this INetworkEntity entity) where T : INetworkComponent
+        {
+            return entity.Components.OfType<T>().ToArray();
+        }
 
         /// <summary>
         /// Creates a new <see cref="NetworkEntityManager"/> for the given connection.

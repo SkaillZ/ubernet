@@ -101,7 +101,6 @@ namespace Skaillz.Ubernet.NetworkEntities
                 .Where(rpc => rpc.EntityId == _context.Entity.Id && rpc.ComponentId == _context.Id)
                 .Subscribe(rpc =>
                 {
-                    Debug.Log("Got RPC: componentID " + rpc.ComponentId + ", entityId: " + rpc.EntityId);
                     var method = _rpcCodeLookup[rpc.RpcCode];
                     method.Invoke(_context, rpc.Params);
                 });
@@ -122,7 +121,6 @@ namespace Skaillz.Ubernet.NetworkEntities
                 RpcCode = _rpcMethodLookup[name],
                 Params = parameters
             };
-            Debug.Log("Send RPC: componentID " + call.ComponentId + ", entityId: " + call.EntityId);
             _context.Entity.Manager.SendEvent(DefaultEvents.Rpc, call, target, reliable);
         }
 

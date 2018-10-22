@@ -4,9 +4,17 @@ Ubernet is a networking library for Unity that is built as an abstraction on top
 
 A high level abstraction called the Network Entity Manager can be used with built-in and custom providers. The Network Entity Manager can synchronize variables and send Remote Procedure Calls (RPCs) on custom objects and Unity MonoBehaviours. Ubernet uses [UniRx](https://github.com/neuecc/UniRx) for all asynchronous operations.
 
-The scripting runtime version must be set to “.NET 4.x Equivalent” in Player Settings. Enabling the Incremental Compiler in Package Manager is recommended.
+Ubernet leverages modern C# features, so the scripting runtime version must be set to “.NET 4.x Equivalent” in Player Settings and enabling the Incremental Compiler in Package Manager is required.
 
 ![.NET 4](docs/img/Dotnet4.png)
+
+![Incremental Compiler](docs/img/IncrementalCompiler.png)
+
+# Philosophy
+Compared to other networking libraries like Photon's PUN, Ubernet was designed to work with an unlimited number of 
+interchangeable providers. This prevents vendor lock-in since the implementations for all providers share the same interface.
+There are also several practical benefits like a more elegant API designed around [UniRx](https://github.com/neuecc/UniRx)
+and easier local testing (no connection to Photon is required when testing with several clients on the same machine or LAN).
 
 # Platforms
 At this time, Ubernet has been tested with on Mac and Windows with the Mono scripting backend. IL2CPP platforms have not been tested yet but will be supported in the future.
@@ -32,7 +40,7 @@ public async Task Connect()
       .WithAppId(appId) // Your Photon App ID
       .WithRegion(PhotonRegions.Europe)
       .WithAppVersion("0.1")
-      .ConnectToCloud(); // Connect to the cloud
+      .ConnectToCloud(); // Connect to the Photon cloud
 
     IGame game = await matchmaker.CreateGame(PhotonCreateGameOptions.FromRoomName("myRoom")); // Create the game
     IConnection connection = await game.ConnectWithPhoton(); // Connect with Photon
@@ -90,7 +98,7 @@ using UniRx;
 
 public IEnumerator Connect()
 {
-	var matchmakerYield = PhotonMatchmaker.NewContext()
+    var matchmakerYield = PhotonMatchmaker.NewContext()
     ...
     .ConnectToCloud()
     .ToYieldInstruction(); // Convert to yield instruction
@@ -117,7 +125,7 @@ using UniRx;
 
 public async Task Connect()
 {
-	try
+  try
   {
     // Observables are awaitable
     PhotonMatchmaker matchmaker = await PhotonMatchmaker.NewContext()
@@ -480,7 +488,7 @@ SyncedValues are variables that are synchronized over the network. **Changes to 
 
 Derive from `MonoNetworkComponent.Synced` to use SyncedValues. RPCs are also supported.
 
-SyncedValues are created by passing generic types. All serializable types are supported (see [Serialization](#Serialization) ). 
+SyncedValues are created by passing generic types. All serializable types are supported (see [Serialization](#Serialization)). 
 
 ```csharp
 // Initialize with default value
@@ -490,7 +498,7 @@ SyncedValue<int> val = new SyncedValue<int>();
 SyncedValue<int> val = new SyncedValue<int>(1);
 ```
 
-Shorter versions are available for common types:
+Shorter versions are available for common types. The following types can also be assigned from the inspector:
 
 * `SyncedBool` for booleans
 * `SyncedInt` for integers
@@ -498,7 +506,7 @@ Shorter versions are available for common types:
 * `SyncedShort` for shorts
 * `SyncedFloat` for floats
 * `SyncedString` for strings
-* `SyncedVector2`,  `SyncedVector3`,  `SyncedQuaternion`,  `SyncedColor`  for commonly used Unity types
+* `SyncedVector2`,  `SyncedVector3`,  `SyncedQuaternion`,  `SyncedColor` for commonly used Unity types
 
 You can read or change the current value with the `Value` property. SyncedValues are `IObservables`, so you can subscribe to changes.
 

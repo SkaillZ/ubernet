@@ -1,7 +1,7 @@
 using Skaillz.Ubernet.NetworkEntities;
 using UnityEngine;
 
-namespace Skaillz.Ubernet.Scripts.NetworkEntities.Unity
+namespace Skaillz.Ubernet.NetworkEntities.Unity
 {
     public class SyncedVector2 : SyncedValue<Vector2>
     {

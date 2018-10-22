@@ -317,7 +317,6 @@ namespace Skaillz.Ubernet.NetworkEntities
                 });
             
             (entity as IRegistrationCallbacks)?.OnRegister();
-            Debug.Log("Registered entity: " + entity);
         }
 
         /// <summary>
