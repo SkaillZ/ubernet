@@ -77,16 +77,16 @@ namespace Skaillz.Ubernet.Tests.IT
             yield return Disconnect();
         }
         
-        [UnityTest, Ignore("")]
+        [UnityTest]
         public IEnumerator ReceivesLeaveEventWithClient_WhenOtherClientLeavesRoom()
         {
             yield return Connect();
 
             int secondIdBeforeLeave = _connection2.LocalClient.ClientId;
-            _connection2.Disconnect();
             
             IClient receivedClient = null;
             _connection.OnClientLeave.Subscribe(p => receivedClient = p);
+            _connection2.Disconnect().Subscribe();
 
             yield return UpdateWhile(() => receivedClient == null);
             

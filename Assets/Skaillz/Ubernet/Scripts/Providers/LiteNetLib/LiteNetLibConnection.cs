@@ -195,7 +195,7 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
 
             _listener.PeerDisconnectedEvent += (peer, info) =>
             {
-                Debug.Log("Peer connected on " + _manager.LocalPort + " :" + peer.EndPoint.Host + ":" + peer.EndPoint.Port);
+                Debug.Log("Peer disonnected on " + _manager.LocalPort + " :" + peer.EndPoint.Host + ":" + peer.EndPoint.Port);
                 RemoveClient(_isServer ? 2 : 1);
             };
 
@@ -223,8 +223,11 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
 
         private void RemoveClient(int playerId)
         {
-            var player = _clients[playerId];
-            RemoveClient(player);
+            if (_clients.ContainsKey(playerId))
+            {
+                var player = _clients[playerId];
+                RemoveClient(player);
+            }
         }
         
         private NetworkEvent CreateEvent(byte code, object data, IMessageTarget target)

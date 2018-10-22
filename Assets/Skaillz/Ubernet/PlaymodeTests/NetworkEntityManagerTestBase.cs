@@ -163,7 +163,7 @@ namespace Skaillz.Ubernet.Tests.IT
 
             bool left = false;
             _manager2.OnPlayerLeft.Subscribe(_ => left = true);
-            _manager.Connection.Disconnect();
+            _manager.Connection.Disconnect().Subscribe();
             
             while (!left)
             {
