@@ -2,8 +2,7 @@
     "name": "Ubernet.Editor",
     "references": [
         "Ubernet",
-        "UniRx",
-        "Ubernet.PlaymodeTests"
+        "UniRx"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [

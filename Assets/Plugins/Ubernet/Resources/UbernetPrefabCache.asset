@@ -11,6 +11,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d68f31355b0f48b7ac48bca612cf631d, type: 3}
   m_Name: UbernetPrefabCache
   m_EditorClassIdentifier: 
-  _prefabs:
-  - {fileID: 1067458307542696, guid: 0271799bf4886461c960c7a5f595bac2, type: 2}
-  - {fileID: 1557968252025964, guid: 2b3b2a77f23ba42abaa0eca2f5a3f2be, type: 2}
+  _prefabs: []

@@ -1,0 +1,17 @@
+{
+    "name": "Ubernet.Editor.Tests",
+    "references": [
+        "Ubernet",
+        "Ubernet.Editor",
+        "UniRx",
+        "Ubernet.PlaymodeTests"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

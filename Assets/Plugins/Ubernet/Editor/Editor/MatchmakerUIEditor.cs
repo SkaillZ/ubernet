@@ -167,15 +167,25 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
                 }
             }
 
-            int lastSelection = Array.IndexOf(_playerTypeFullNames, typeStr);
-            if (lastSelection == -1)
+            if (_playerTypeDisplayNames != null && _playerTypeFullNames != null 
+                && _playerTypeDisplayNames.Length > 0 && _playerTypeFullNames.Length > 0)
             {
-                lastSelection = 0;
-                _playerTypeProp.stringValue = typeof(DefaultPlayer).AssemblyQualifiedName;
+                int lastSelection = Array.IndexOf(_playerTypeFullNames, typeStr);
+                if (lastSelection == -1)
+                {
+                    lastSelection = 0;
+                    _playerTypeProp.stringValue = typeof(DefaultPlayer).AssemblyQualifiedName;
+                }
+                
+                int index = EditorGUILayout.Popup(_playerTypeContent, lastSelection, _playerTypeDisplayNames);
+                _playerTypeProp.stringValue = _playerTypeFullNames[index];
             }
-            
-            int index = EditorGUILayout.Popup(_playerTypeContent, lastSelection, _playerTypeDisplayNames);
-            _playerTypeProp.stringValue = _playerTypeFullNames[index];
+            else
+            {
+                EditorGUILayout.HelpBox($"Derive from {nameof(PlayerBase)} to create your own player type. " +
+                                        "It will be included in the list automatically.", MessageType.Info);
+                EditorGUILayout.LabelField(_playerTypeContent, "No types found.");
+            }
         }
 
         private void DrawRegionSelection()
@@ -205,11 +215,21 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
 
         private static Type[] GetPlayerTypes()
         {
-            var assemblies = GetListOfEntryAssemblyWithReferences();
-            return assemblies
-                .SelectMany(a => a.ExportedTypes)
-                .Where(t => typeof(IPlayer).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface)
-                .ToArray();
+            var types = new List<Type> {typeof(DefaultPlayer)};
+
+            try
+            {
+                var assemblies = GetListOfEntryAssemblyWithReferences();
+                types.AddRange(assemblies
+                    .SelectMany(a => a.ExportedTypes)
+                    .Where(t => typeof(IPlayer).IsAssignableFrom(t) && !t.IsAbstract && !t.IsInterface));
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"Could not load player types: {e.Message}");
+            }
+
+            return types.Distinct().ToArray();
         }
         
         private static SceneAsset GetSceneObject(string sceneObjectName)
