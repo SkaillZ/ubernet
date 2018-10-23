@@ -1,0 +1,13 @@
+{
+    "name": "Ubernet.PlaymodeTests",
+    "references": [
+        "Ubernet",
+        "UniRx"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

@@ -98,14 +98,14 @@ using UniRx;
 
 public IEnumerator Connect()
 {
-    var matchmakerYield = PhotonMatchmaker.NewContext()
+  var matchmakerYield = PhotonMatchmaker.NewContext()
     ...
     .ConnectToCloud()
     .ToYieldInstruction(); // Convert to yield instruction
 
-	yield return matchmakerYield;
+  yield return matchmakerYield;
 
-	if (matchmakerYield.HasResult)
+  if (matchmakerYield.HasResult)
   {
     // Obtain the matchmaker
     PhotonMatchmaker matchmaker = matchmakerYield.Result;
