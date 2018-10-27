@@ -1,14 +1,13 @@
 {
-    "name": "Ubernet.PlaymodeTests",
+    "name": "Ubernet.Extras",
     "references": [
         "Ubernet",
         "Ubernet.Providers.LiteNetLibExperimental",
         "Ubernet.Providers.Photon",
-        "UniRx"
+        "UniRx",
+        "UniRx.Async"
     ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
-    ],
+    "optionalUnityReferences": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false

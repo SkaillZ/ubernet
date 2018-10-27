@@ -1,0 +1,11 @@
+{
+    "name": "Ubernet.Providers.LiteNetLibExperimental",
+    "references": [
+        "Ubernet",
+        "UniRx"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

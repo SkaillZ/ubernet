@@ -1,0 +1,11 @@
+{
+    "name": "Ubernet.Providers.Photon",
+    "references": [
+        "Ubernet",
+        "UniRx"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

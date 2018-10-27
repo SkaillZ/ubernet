@@ -4,7 +4,8 @@
         "Ubernet",
         "Ubernet.Editor",
         "UniRx",
-        "Ubernet.PlaymodeTests"
+        "Ubernet.PlaymodeTests",
+        "Ubernet.Providers.Photon"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

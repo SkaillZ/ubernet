@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using UniRx;
-using InternalPhotonPlayerType = ExitGames.Client.Photon.LoadBalancing.Player;
-
-namespace Skaillz.Ubernet
+﻿namespace Skaillz.Ubernet
 {
-    internal class Client : IClient
+    public class Client : IClient
     {
         public int ClientId { get; set; }
 
