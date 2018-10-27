@@ -197,6 +197,4 @@ public class UbernetInstaller : EditorWindow
             .Where(a => a.EndsWith(".unitypackage"))
             .ToArray();
     }
-    
-    public class PredefinedPackage
 }
