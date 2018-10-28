@@ -1,85 +1,67 @@
 ﻿using System;
 using UniRx;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Skaillz.Ubernet.NetworkEntities
 {
     public abstract class SyncedValue
     {
-        protected readonly ISubject<object> _subject = new Subject<object>();
-
-        private object _value;
-
-        protected SyncedValue()
-        {
-        }
-
-        protected SyncedValue(object initialValue)
-        {
-            _value = initialValue;
-        }
-
-        internal object ObjectValue
-        {
-            get { return _value; }
-            set
-            {
-                if (value != _value)
-                {
-                    _value = value;
-                    SetDirty();
-                }
-            }
-        }
-
-        public void SetDirty()
-        {
-            _subject.OnNext(_value);
-        }
-
         public override string ToString()
         {
-            return _value == null ? "null" : _value.ToString();
+            var value = GetValue();
+            return value == null ? "null" : value.ToString();
         }
+        
+        internal abstract object GetValue();
+        internal abstract void SetValue(object value);
     }
     
     [Serializable]
     public class SyncedValue<T> : SyncedValue, IObservable<T>
     {
-        [SerializeField]
-        private T _serializedValue;
+        [SerializeField, FormerlySerializedAs("_serializedValue")]
+        private T _value;
+        private readonly ISubject<T> _subject = new Subject<T>();
         
         public SyncedValue() : this(default(T))
         {
         }
 
-        public SyncedValue(T initialValue) : base(initialValue)
+        public SyncedValue(T initialValue)
         {
-            _serializedValue = initialValue;
-
-            _subject.Subscribe(val =>
-            {
-                _serializedValue = (T) val;
-            });
+            _value = initialValue;
         }
 
         public T Value
         {
-            get { return _serializedValue; }
-            set
-            {
-                ObjectValue = value;
-            }
+            get { return _value; }
+            set { _value = value; }
         }
 
         public IDisposable Subscribe(IObserver<T> observer)
         {
-            return _subject.Cast<object, T>().Subscribe(observer);
+            return _subject.Subscribe(observer);
+        }
+        
+        public void SetDirty()
+        {
+            _subject.OnNext(_value);
         }
 
         public static implicit operator T(SyncedValue<T> syncedValue)
         {
-            return syncedValue._serializedValue;
+            return syncedValue._value;
+        }
+        
+        internal override object GetValue()
+        {
+            return _value;
+        }
+
+        internal override void SetValue(object value)
+        {
+            _value = (T) value;
         }
     }
     

@@ -284,7 +284,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 			_state = State.JoiningGame;
 			await Observable.NextFrame();
 			
-			_connection = LiteNetLibConnection.CreateServer(5000, 2, "0.1", false);
+			_connection = LiteNetLibConnectionExperimental.CreateServer(5000, 2, "0.1", false);
 			_connection.RegisterUnityDefaultTypes();
 			_connection.AutoUpdate();
 			
@@ -302,7 +302,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 			_state = State.JoiningGame;
 			await Observable.NextFrame();
 			
-			_connection = LiteNetLibConnection.CreateClient(_liteNetLibAddress, 5000, 2, "0.1", false);
+			_connection = LiteNetLibConnectionExperimental.CreateClient(_liteNetLibAddress, 5000, 2, "0.1", false);
 			_connection.RegisterUnityDefaultTypes();
 			_connection.AutoUpdate();
 			

@@ -92,8 +92,8 @@ namespace Skaillz.Ubernet.Tests.IT
             }
             else if (Provider == Providers.LiteNetLib)
             {
-                _connection = LiteNetLibConnection.CreateServer(5000, 2, "0.1", false);
-                _connection2 = LiteNetLibConnection.CreateClient("localhost", 5000, 2, "0.1", false);
+                _connection = LiteNetLibConnectionExperimental.CreateServer(5000, 2, "0.1", false);
+                _connection2 = LiteNetLibConnectionExperimental.CreateClient("localhost", 5000, 2, "0.1", false);
             }
         }
 
@@ -155,11 +155,11 @@ namespace Skaillz.Ubernet.Tests.IT
                 IConnection connection;
                 if (create)
                 {
-                    connection = LiteNetLibConnection.CreateServer(5000, 2, "0.1", false);
+                    connection = LiteNetLibConnectionExperimental.CreateServer(5000, 2, "0.1", false);
                 }
                 else
                 {
-                    connection = LiteNetLibConnection.CreateClient("localhost", 5000, 2, "0.1", false);
+                    connection = LiteNetLibConnectionExperimental.CreateClient("localhost", 5000, 2, "0.1", false);
                 }
 
                 if (num == 0)

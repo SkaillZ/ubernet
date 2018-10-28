@@ -25,7 +25,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         {
             foreach (var value in _syncedValues)
             {
-                _serializer.Serialize(value.ObjectValue, stream);
+                _serializer.Serialize(value.GetValue(), stream);
             }
         }
         
@@ -33,7 +33,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         {
             foreach (var value in _syncedValues)
             {
-                value.ObjectValue = _serializer.Deserialize(stream);
+                value.SetValue(_serializer.Deserialize(stream));
             }
         }
         

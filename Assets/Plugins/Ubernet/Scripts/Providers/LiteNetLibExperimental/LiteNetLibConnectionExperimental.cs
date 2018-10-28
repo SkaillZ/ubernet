@@ -8,7 +8,7 @@ using UnityEngine.Profiling;
 
 namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
 {
-    public class LiteNetLibConnection : IConnection
+    public class LiteNetLibConnectionExperimental : IConnection
     {
         private readonly Dictionary<int, IClient> _clients = new Dictionary<int, IClient>();
         
@@ -46,21 +46,21 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
         public IObservable<IClient> OnHostMigration => _hostMigratedSubject.AsObservable();
         public IObservable<NetworkEvent> OnEvent => _eventSubject.AsObservable();
 
-        public static LiteNetLibConnection CreateServer(int port, int maxConnections, string version, bool enableNatPunch)
+        public static LiteNetLibConnectionExperimental CreateServer(int port, int maxConnections, string version, bool enableNatPunch)
         {
-            var server = new LiteNetLibConnection();
+            var server = new LiteNetLibConnectionExperimental();
             server.InitAsServer(port, maxConnections, version, enableNatPunch);
             return server;
         }
         
-        public static LiteNetLibConnection CreateClient(string address, int port, int maxConnections, string version, bool enableNatPunch)
+        public static LiteNetLibConnectionExperimental CreateClient(string address, int port, int maxConnections, string version, bool enableNatPunch)
         {
-            var client = new LiteNetLibConnection();
+            var client = new LiteNetLibConnectionExperimental();
             client.InitAsClient(address, port, maxConnections, version, enableNatPunch);
             return client;
         }
 
-        private LiteNetLibConnection(ISerializer serializer = null)
+        private LiteNetLibConnectionExperimental(ISerializer serializer = null)
         {
             Serializer = serializer ?? new Serializer();
         }
