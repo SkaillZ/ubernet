@@ -4,6 +4,8 @@ Ubernet is a networking library for Unity that is built as an abstraction on top
 
 A high level abstraction called the Network Entity Manager can be used with built-in and custom providers. The Network Entity Manager can synchronize variables and send Remote Procedure Calls (RPCs) on custom objects and Unity MonoBehaviours. Ubernet uses [UniRx](https://github.com/neuecc/UniRx) for all asynchronous operations.
 
+The libraries [UniRx](https://github.com/neuecc/UniRx), [LiteNetLib](https://github.com/RevenantX/LiteNetLib) and the [Photon Realtime Unity SDK](https://www.photonengine.com/en-US/sdks#realtimeunity) are included.
+
 Ubernet leverages modern C# features, so the scripting runtime version must be set to “.NET 4.x Equivalent” in Player Settings and enabling the Incremental Compiler in Package Manager is required.
 
 ![.NET 4](docs/img/Dotnet4.png)
