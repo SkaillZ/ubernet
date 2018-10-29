@@ -24,6 +24,7 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
 
         private readonly GUIContent _idContent = new GUIContent("Network Entity ID", IdTooltip);
         
+
         private GUIContent _duplicateIdContent;
         
         private readonly GUIContent _reliableContent = new GUIContent("Reliability",

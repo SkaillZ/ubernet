@@ -62,11 +62,36 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
             }
         }
 
+        private void FixedUpdate()
+        {
+            if (Entity == null)
+            {
+                return;
+            }
+
+            if (Entity.IsLocal())
+            {
+                OnLocalFixedUpdate();
+            }
+            else
+            {
+                OnRemoteFixedUpdate();
+            }
+        }
+
         protected virtual void OnLocalUpdate()
         {
         }
         
         protected virtual void OnRemoteUpdate()
+        {
+        }
+        
+        protected virtual void OnLocalFixedUpdate()
+        {
+        }
+        
+        protected virtual void OnRemoteFixedUpdate()
         {
         }
         
