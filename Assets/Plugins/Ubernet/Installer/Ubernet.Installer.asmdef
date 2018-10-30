@@ -1,0 +1,10 @@
+{
+    "name": "Ubernet.Installer",
+    "references": [],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}

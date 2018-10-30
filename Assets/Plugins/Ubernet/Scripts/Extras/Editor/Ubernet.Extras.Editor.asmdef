@@ -1,0 +1,14 @@
+{
+    "name": "Ubernet.Extras.Editor",
+    "references": [
+        "Ubernet",
+        "Ubernet.Extras",
+        "Ubernet.Providers.Photon"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}
