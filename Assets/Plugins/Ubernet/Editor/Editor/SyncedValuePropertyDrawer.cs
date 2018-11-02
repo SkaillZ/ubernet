@@ -19,7 +19,7 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            EditorGUI.PropertyField(position, property.FindPropertyRelative("_serializedValue"), label);
+            EditorGUI.PropertyField(position, property.FindPropertyRelative("_value"), label);
         }
     }
 }
