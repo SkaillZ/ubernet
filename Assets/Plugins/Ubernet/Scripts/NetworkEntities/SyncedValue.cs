@@ -36,7 +36,14 @@ namespace Skaillz.Ubernet.NetworkEntities
         public T Value
         {
             get { return _value; }
-            set { _value = value; }
+            set
+            {
+                if (!Equals(value, _value))
+                {
+                    _value = value;
+                    SetDirty();
+                }
+            }
         }
 
         public IDisposable Subscribe(IObserver<T> observer)

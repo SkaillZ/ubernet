@@ -7,7 +7,7 @@ using UnityEditor;
 
 namespace Skaillz.Ubernet.NetworkEntities.Unity
 {
-    [RequireComponent(typeof(GameObjectNetworkEntityBase))]
+    //[RequireComponent(typeof(GameObjectNetworkEntityBase))]
     public abstract class MonoNetworkComponent : MonoBehaviour, INetworkComponent, IRegistrationCallbacks
     {
         [SerializeField] [HideInInspector] protected short _id;

@@ -27,7 +27,11 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
             get { return _id; }
             set
             {
-                _entity.Id = value;
+                if (_entity != null)
+                {
+                    _entity.Id = value;
+                }
+
                 _id = value;
             }
         }

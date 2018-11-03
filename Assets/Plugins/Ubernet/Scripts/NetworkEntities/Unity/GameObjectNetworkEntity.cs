@@ -6,7 +6,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 {
     public sealed class GameObjectNetworkEntity : GameObjectNetworkEntityBase
     {
-        internal static bool AutoRegister = true;
+        public static bool AutoRegister = true;
         
         protected override void Awake()
         {
