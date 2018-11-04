@@ -72,6 +72,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         }
     }
     
+    [Serializable]
     public sealed class SyncedBool : SyncedValue<bool>
     {
         public SyncedBool() : base()
@@ -83,6 +84,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         }
     }
 
+    [Serializable]
     public sealed class SyncedInt : SyncedValue<int>
     {
         public SyncedInt() : base()
@@ -94,6 +96,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         }
     }
     
+    [Serializable]
     public sealed class SyncedByte : SyncedValue<byte>
     {
         public SyncedByte() : base()
@@ -105,6 +108,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         }
     }
     
+    [Serializable]
     public sealed class SyncedShort : SyncedValue<short>
     {
         public SyncedShort() : base()
@@ -128,6 +132,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         }
     }
     
+    [Serializable]
     public sealed class SyncedString : SyncedValue<string>
     {
         public SyncedString() : base()
