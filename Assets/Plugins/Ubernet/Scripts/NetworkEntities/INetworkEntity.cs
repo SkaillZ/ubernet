@@ -31,8 +31,15 @@ namespace Skaillz.Ubernet.NetworkEntities
         /// Specifies if the entities' serialization events should be sent reliably or unreliably.
         /// </summary>
         /// This setting does not affect RPCs, which are sent reliably by default.
-        ///
         bool Reliable { get; set; }
+        
+        /// <summary>
+        /// Specifies if the entities' serialization events should be sent on each NetworkEntityManager serialization 
+        /// update or only if the entity's properties have changed.
+        /// </summary>
+        /// This setting does not affect RPCs. Setting it to false on reliable connections is not recommended since
+        /// a lot of traffic could be generated unnecessarily.
+        bool UpdateWhenChanged { get; set; }
         
         /// <summary>
         /// The <see cref="NetworkEntityManager"/> that manages the entity

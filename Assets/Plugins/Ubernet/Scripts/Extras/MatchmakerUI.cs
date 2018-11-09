@@ -36,6 +36,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 		// Network entities settings
 		[SerializeField] private bool _automaticallyCreateEntityManager = true;
 		[SerializeField] private string _playerType = typeof(DefaultPlayer).AssemblyQualifiedName;
+		[SerializeField] private int _serializationRate = 20;
 
 		// Photon settings
 		[SerializeField] private ConnectionProtocol _photonProtocol;
@@ -117,7 +118,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 						break;
 					case State.Matchmaking:
 					{
-						GUILayout.Label($"Connected to matchmaker {_matchmaker.GetType().Name}.");
+						GUILayout.Label($"Connected to matchmaker {_matchmaker?.GetType().Name}.");
 						if (GUILayout.Button("Create Game"))
 						{
 							HandleErrors(CreateGame());
@@ -318,7 +319,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 		private async Task CreateEntityManager()
 		{
 			_state = State.CreatingEntityManager;
-			_entityManager = await _connection.CreateEntityManager()
+			_entityManager = await _connection.CreateEntityManager(_serializationRate)
 				.SetLocalPlayer((IPlayer) Activator.CreateInstance(Type.GetType(_playerType)))
 				.SetAsDefaultEntityManager()
 				.Initialize();
@@ -366,7 +367,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 			_state = State.DisconnectingFromGame;
 			await _connection.Disconnect();
 
-			_state = State.Matchmaking;
+			_state = _matchmaker != null ? State.Matchmaking : State.Uninitialized;
 			_connection = null;
 		}
 

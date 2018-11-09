@@ -152,7 +152,6 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
         {
             var evt = CreateEvent(code, data, target);
             
-            Debug.Log("Send event with code " + code + "(" + _manager.PeersCount + " peers). this is " + _manager.LocalPort);
             // TODO: handle targets
 
             if (target == MessageTarget.AllPlayers)
@@ -176,15 +175,9 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
         {
             _listener.NetworkReceiveEvent += (peer, reader) =>
             {
-                Debug.Log("NetworkReceiveEvent on " + _manager.LocalPort + " by peer: " + peer.EndPoint.Host + ":" + peer.EndPoint.Port);
                 var bytes = reader.Data;
                 var evt = Serializer.Deserialize(bytes);
 
-                Debug.Log("Received event with code " + evt.Code);
-                if (evt.Data is string)
-                {
-                    Debug.Log("data: " + evt.Data);
-                }
                 _eventSubject.OnNext(evt);
             };
 
@@ -201,7 +194,7 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
 
             _listener.PeerDisconnectedEvent += (peer, info) =>
             {
-                Debug.Log("Peer disonnected on " + _manager.LocalPort + " :" + peer.EndPoint.Host + ":" + peer.EndPoint.Port);
+                Debug.Log("Peer disconnected on " + _manager.LocalPort + " :" + peer.EndPoint.Host + ":" + peer.EndPoint.Port);
                 RemoveClient(_isServer ? 2 : 1);
             };
 

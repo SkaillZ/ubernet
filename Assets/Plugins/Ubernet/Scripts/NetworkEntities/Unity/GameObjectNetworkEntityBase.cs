@@ -16,10 +16,13 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
         private NetworkEntity _entity;
         [SerializeField] private int _id = 1;
         [SerializeField] private bool _reliable = true;
+        [SerializeField] private bool _updateWhenChanged = true;
 
         protected virtual void Awake()
         {
             _entity = new NetworkEntity(_id);
+            _entity.Reliable = _reliable;
+            _entity.UpdateWhenChanged = _updateWhenChanged;
         }
         
         public int Id
@@ -41,7 +44,13 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
             get { return _entity.OwnerId; }
             set { _entity.OwnerId = value; }
         }
-        
+
+        public bool UpdateWhenChanged
+        {
+            get { return _entity.UpdateWhenChanged; }
+            set { _entity.UpdateWhenChanged = value; }
+        }
+
         public virtual NetworkEntityManager Manager
         {
             get { return _entity.Manager; }
@@ -52,8 +61,8 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 
         public bool Reliable
         {
-            get => _reliable;
-            set => _reliable = value;
+            get { return _entity.Reliable; }
+            set { _entity.Reliable = value; }
         }
 
         public IReadOnlyList<INetworkComponent> Components => _entity.Components;

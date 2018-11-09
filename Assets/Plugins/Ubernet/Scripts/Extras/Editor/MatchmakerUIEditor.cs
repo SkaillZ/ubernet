@@ -19,6 +19,7 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
         
         private SerializedProperty _automaticallyCreateEntityManagerProp;        
         private SerializedProperty _playerTypeProp;
+        private SerializedProperty _serializationRateProp;
 
         private SerializedProperty _photonProtocolProp;
         private SerializedProperty _photonRegionProp;
@@ -41,6 +42,8 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
             "properties are saved. If you choose a type and a default constructor is present, it can be created automatically. " +
             $"For development purposes, you can use the '{nameof(DefaultPlayer)}' type, which only provides a name for the player. " +
             $"All custom types that implement {nameof(IPlayer)} are also shown in the list.");
+        private readonly GUIContent _serializationRateContent = new GUIContent("Serialization Rate",
+            "The number of times per second Entity and Player updates are sent.");
 
         private readonly GUIContent _photonProtocolContent = new GUIContent("Protocol", "The transport protocol used " +
             "by Photon. The Websocket options are only available if building for WebGL.");
@@ -70,6 +73,7 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
 
             _automaticallyCreateEntityManagerProp = serializedObject.FindProperty("_automaticallyCreateEntityManager");
             _playerTypeProp = serializedObject.FindProperty("_playerType");
+            _serializationRateProp = serializedObject.FindProperty("_serializationRate");
 
             _photonProtocolProp = serializedObject.FindProperty("_photonProtocol");
             _photonRegionProp = serializedObject.FindProperty("_photonRegion");
@@ -96,6 +100,7 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
             DrawBoldHeader(_entitiesHeaderContent);
             EditorGUILayout.PropertyField(_automaticallyCreateEntityManagerProp, _automaticallyCreateEntityManagerContent);
             DrawPlayerTypeSelection();
+            EditorGUILayout.PropertyField(_serializationRateProp, _serializationRateContent);
 
             DrawBoldHeader(_providerSettingsContent);
             _photonFoldout = EditorGUILayout.Foldout(_photonFoldout, _photonSettingsContent);

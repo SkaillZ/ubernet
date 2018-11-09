@@ -13,23 +13,29 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
         
         private SerializedProperty _idProp;
         private SerializedProperty _reliableProp;
+        private SerializedProperty _updateWhenChangedProp;
 
         private SerializedObject _cacheObj;
         private SerializedProperty _cacheArray;
         
         private static Texture _warningIcon;
 
-        private static readonly string IdTooltip = $"This ID should be unique per scene. It is automatically set when a" +
-            $" {nameof(GameObjectNetworkEntityBase)} is created or reset.";
+        private static readonly string IdTooltip = "This ID should be unique per scene. It is automatically set when a " +
+            $"{nameof(GameObjectNetworkEntityBase)} is created or reset.";
 
         private readonly GUIContent _idContent = new GUIContent("Network Entity ID", IdTooltip);
         
-
         private GUIContent _duplicateIdContent;
         
         private readonly GUIContent _reliableContent = new GUIContent("Reliability",
-            $"Specifies if the entity's serialization events should be sent reliably or unreliably. " +
-            $"This setting does not affect RPCs, which are sent reliably by default.");
+            "Specifies if the entity's serialization events should be sent reliably or unreliably. " +
+            "This setting does not affect RPCs, which are sent reliably by default.");
+        
+        private readonly GUIContent _updateWhenChangedContent = new GUIContent("Only Update When Changed",
+            "If enabled, Entity and Component updates are only sent if the contents of the serialized stream " +
+            "are different from the previous one. This setting is highly recommended if events are sent reliably. " +
+            "For unreliable events, it can be useful to send them on every network update by disabling this option, " +
+            "so that changes in dropped packages are sent on the next update.");
         
         private readonly GUIContent _ownerIdContent = new GUIContent("Owner");
         private readonly GUIContent _componentsContent = new GUIContent("Controlled components:");
@@ -41,6 +47,7 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
         {
             _idProp = serializedObject.FindProperty("_id");
             _reliableProp = serializedObject.FindProperty("_reliable");
+            _updateWhenChangedProp = serializedObject.FindProperty("_updateWhenChanged");
 
             var cache = Resources.Load<PrefabCache>(PrefabCache.CacheFileName);
             if (cache != null)
@@ -76,7 +83,8 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
             DrawOwnerInfo(entity);
             
             DrawReliabilitySelection();
-            
+            DrawUpdateWhenChangedCheckbox();
+
             if (Application.isPlaying && !IsPrefab(entity.gameObject))
             {
                 DrawComponentList(entity);
@@ -257,6 +265,18 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
                 "Reliable"
             });
             _reliableProp.boolValue = reliableValue == 1;
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                serializedObject.ApplyModifiedProperties();
+            }
+        }
+        
+        private void DrawUpdateWhenChangedCheckbox()
+        {
+            EditorGUI.BeginChangeCheck();
+
+            EditorGUILayout.PropertyField(_updateWhenChangedProp, _updateWhenChangedContent);
 
             if (EditorGUI.EndChangeCheck())
             {

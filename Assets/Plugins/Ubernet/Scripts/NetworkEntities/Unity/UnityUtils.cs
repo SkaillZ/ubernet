@@ -6,7 +6,7 @@ using Skaillz.Ubernet.NetworkEntities.Unity;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Skaillz.Ubernet
+namespace Skaillz.Ubernet.NetworkEntities.Unity
 {
     public static class UnityUtils
     {

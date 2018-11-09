@@ -20,6 +20,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         public int OwnerId { get; set; }
         public bool IsActive { get; set; } = true;
         public bool Reliable { get; set; } = true;
+        public bool UpdateWhenChanged { get; set; } = true;
         public NetworkEntityManager Manager { get; set; }
         
         public IReadOnlyList<INetworkComponent> Components => _components.Values.ToList();
@@ -29,7 +30,6 @@ namespace Skaillz.Ubernet.NetworkEntities
 
         public NetworkEntity()
         {
-            
         }
 
         public NetworkEntity(int id, int ownerId = -1)
@@ -107,7 +107,8 @@ namespace Skaillz.Ubernet.NetworkEntities
                     bytes = memStream.ToArray();
                 }
 
-                if (!_componentCaches.ContainsKey(id) || !UbernetUtils.AreArraysEqual(bytes, _componentCaches[id]))
+                if (!_componentCaches.ContainsKey(id)|| !UbernetUtils.AreArraysEqual(bytes, _componentCaches[id])
+                    || !UpdateWhenChanged)
                 {
                     componentsToSerialize[id] = bytes;
                     _componentCaches[id] = bytes;
@@ -116,7 +117,7 @@ namespace Skaillz.Ubernet.NetworkEntities
             
             int updatedNum = componentsToSerialize.Count;
 
-            if (updatedNum > 0) // Only streams with content are sent
+            if (updatedNum > 0 || !UpdateWhenChanged) // Only streams with content are sent
             {
                 _helper.SerializeShort((short) updatedNum, stream);
                 foreach (var pair in componentsToSerialize)
