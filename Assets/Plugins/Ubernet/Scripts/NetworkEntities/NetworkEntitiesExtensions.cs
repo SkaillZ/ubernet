@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Skaillz.Ubernet.Providers.Mock;
 
 namespace Skaillz.Ubernet.NetworkEntities
 {
@@ -152,6 +153,14 @@ namespace Skaillz.Ubernet.NetworkEntities
         public static bool IsServer([NotNull] this IPlayer player)
         {
             return player.ClientId == player.Manager?.Connection?.Server?.ClientId;
+        }
+
+        /// <summary>
+        /// Returns if the manager is in offline mode (when the connection is a <see cref="MockConnection"/>)
+        /// </summary>
+        public static bool IsOffline(this NetworkEntityManager manager)
+        {
+            return manager.Connection is MockConnection;
         }
         
         /// <summary>

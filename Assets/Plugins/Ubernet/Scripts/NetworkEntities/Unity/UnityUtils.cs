@@ -62,7 +62,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
                     manager.SendEvent(DefaultEvents.NetworkEntityCreateFromResource, stream.ToArray());
                 }
 
-                manager.RegisterEntity(entity);
+                manager.RegisterEntity(entity, true);
                 return entity;
             }
             finally
@@ -110,7 +110,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
                     manager.SendEvent(DefaultEvents.NetworkEntityCreateFromPrefabCache, stream.ToArray());
                 }
 
-                manager.RegisterEntity(entity);
+                manager.RegisterEntity(entity, true);
                 return entity;
             }
             finally

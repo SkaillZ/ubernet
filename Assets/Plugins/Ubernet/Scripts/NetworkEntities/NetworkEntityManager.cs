@@ -199,7 +199,7 @@ namespace Skaillz.Ubernet.NetworkEntities
             entity.OwnerId = ownedByScene ? -1 : _connection.LocalClient.ClientId;
 
             BroadcastEntityCreation(entity);
-            RegisterEntity(entity);
+            RegisterEntity(entity, true);
         }
 
         /// <summary>
@@ -285,6 +285,11 @@ namespace Skaillz.Ubernet.NetworkEntities
         /// <exception cref="ArgumentException">If the entity's ID is negative</exception>
         public void RegisterEntity([NotNull] INetworkEntity entity)
         {
+            RegisterEntity(entity, false);
+        }
+
+        internal void RegisterEntity([NotNull] INetworkEntity entity, bool triggerEvent)
+        {
             if (entity == null)
             {
                 throw new ArgumentNullException(nameof(entity), "Entity must not be null.");
@@ -317,6 +322,11 @@ namespace Skaillz.Ubernet.NetworkEntities
                 });
             
             (entity as IRegistrationCallbacks)?.OnRegister();
+
+            if (triggerEvent)
+            {
+                _entityCreatedSubject.OnNext(entity);
+            }
         }
 
         /// <summary>
