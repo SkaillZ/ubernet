@@ -107,7 +107,13 @@ namespace Skaillz.Ubernet.NetworkEntities
         /// <returns>The player that owns the entity.</returns>
         public static IPlayer GetOwner([NotNull] this INetworkEntity entity)
         {
-            return entity.Manager?.GetPlayer(entity.OwnerId);
+            int ownerId = entity.OwnerId;
+            if (entity.OwnerId == -1)
+            {
+                return entity.Manager.GetServerPlayer();
+            }
+            
+            return entity.Manager?.GetPlayer(ownerId);
         }
         
         /// <summary>

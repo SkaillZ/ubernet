@@ -152,17 +152,34 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
         {
             var evt = CreateEvent(code, data, target);
             
-            // TODO: handle targets
+            // TODO: handle targets properly
+            
+            int[] targetClients = null;
+            if (target is IClientIdResolvable)
+            {
+                var resolvable = (IClientIdResolvable) target;
+                targetClients = new[] {resolvable.ClientId};
+            }
+            else if (target is IClientIdListResolvable)
+            {
+                var resolvable = (IClientIdListResolvable) target;
+                targetClients = resolvable.GetClientIds();
+            }
 
-            if (target == MessageTarget.AllPlayers)
+            if (target == MessageTarget.AllPlayers || targetClients != null && targetClients.Contains(_isServer ? 1 : 2))
             {
                 _eventSubject.OnNext(evt);
             }
             
             _manager.GetPeersNonAlloc(_peers);
-            foreach (var peer in _peers)
+            if (target == MessageTarget.AllPlayers || target == MessageTarget.Others ||
+                targetClients != null && targetClients.Contains(_isServer ? 2 : 1))
             {
-                peer.Send(Serializer.Serialize(evt), reliable ? SendOptions.Unreliable : SendOptions.ReliableOrdered);
+                foreach (var peer in _peers)
+                {
+                    peer.Send(Serializer.Serialize(evt),
+                        reliable ? SendOptions.Unreliable : SendOptions.ReliableOrdered);
+                }
             }
         }
 

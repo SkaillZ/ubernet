@@ -169,6 +169,7 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
                 {
                     GUI.FocusControl(null);
                     entity.Reset();
+                    EditorUtility.SetDirty(entity);
                 }
                 if (GUILayout.Button("Select other entities", EditorStyles.miniButton))
                 {

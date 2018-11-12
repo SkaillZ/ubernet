@@ -4,7 +4,8 @@
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
@@ -12,4 +13,5 @@ MonoBehaviour:
   m_Name: UbernetPrefabCache
   m_EditorClassIdentifier: 
   _prefabs:
-  - {fileID: 1565637392857218, guid: 612756cbb2f714c60a4f5e8579be3df1, type: 2}
+  - {fileID: 1565637392857218, guid: 612756cbb2f714c60a4f5e8579be3df1, type: 3}
+  - {fileID: 6139664127261299563, guid: 35b5bb891a73e41e8b93e19eb5d88d2d, type: 3}

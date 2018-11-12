@@ -3,8 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using UnityEngine.Serialization;
 #if UNITY_EDITOR
+using UnityEditor;
 using System.Linq;
 #endif
 
@@ -122,7 +122,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 
         public override string ToString()
         {
-            return $"MonoNetworkEntity {_entity}";
+            return $"{nameof(GameObjectNetworkEntityBase)} {_entity}";
         }
         
 #if UNITY_EDITOR
@@ -151,6 +151,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
         }
 
         // TODO: implement for non-mono components
+        [ContextMenu("Reassign Component IDs")]
         internal void ReassignComponentIds()
         {
             var components = GetComponents<MonoNetworkComponent>();
@@ -163,6 +164,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
             {
                 var component = components[i];
                 component.Id = i;
+                EditorUtility.SetDirty(component);
             }
         }
 #endif
