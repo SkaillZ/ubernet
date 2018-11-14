@@ -389,6 +389,21 @@ namespace Skaillz.Ubernet.NetworkEntities
         {
             return _entities.ContainsKey(entity.Id);
         }
+
+        /// <summary>
+        /// Returns the entity with the given ID.
+        /// </summary>
+        /// <param name="id">The ID to return the entity for</param>
+        /// <returns>The entity with the given ID</returns>
+        public INetworkEntity GetEntity(int id)
+        {
+            if (!_entities.ContainsKey(id))
+            {
+                return null;
+            }
+
+            return _entities[id];
+        }
         
         private void SendEntityAndPlayerUpdates()
         {

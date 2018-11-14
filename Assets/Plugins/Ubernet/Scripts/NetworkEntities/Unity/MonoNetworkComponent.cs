@@ -62,7 +62,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
             }
         }
 
-        private void FixedUpdate()
+        protected virtual void FixedUpdate()
         {
             if (Entity == null)
             {
