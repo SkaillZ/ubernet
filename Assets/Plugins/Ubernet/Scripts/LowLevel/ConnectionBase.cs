@@ -19,7 +19,7 @@ namespace Skaillz.Ubernet
         protected readonly IClient LocalClientRef = new Client(-1);
         
         public ISerializer Serializer { get; set; }
-        public virtual IClient LocalClient => LocalClientRef;
+        public IClient LocalClient => LocalClientRef;
         public abstract IClient Server { get; protected set; }
         
         public virtual IReadOnlyList<IClient> Clients => ClientDict.Values.ToList();

@@ -36,7 +36,9 @@ namespace Skaillz.Ubernet.Providers.Mock
             Serializer = serializer ?? new Serializer();
             Network = network;
             Network?.Connect(this, actAsServer);
-            
+
+            LocalClient.ClientId = 1;
+
             RespondToPings();
         }
         
