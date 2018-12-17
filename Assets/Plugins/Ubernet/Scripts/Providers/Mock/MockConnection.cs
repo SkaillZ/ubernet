@@ -77,7 +77,7 @@ namespace Skaillz.Ubernet.Providers.Mock
             {
                 return;
             }
-            
+
             while (_sendQueue.Count > 0)
             {
                 var evt = _sendQueue.Dequeue();
@@ -85,10 +85,15 @@ namespace Skaillz.Ubernet.Providers.Mock
                 {
                     Network.SendEvent(evt, Serializer);
                 }
-                else if (evt.Target == MessageTarget.AllPlayers || evt.Target == MessageTarget.Server && _actAsServer)
+                else
                 {
-                    // TODO: support ID resolvables
-                    _receiveQueue.Enqueue(Serializer.Serialize(evt));
+                    var serializedEvent = Serializer.Serialize(evt);
+                    var targetIds = ResolveClientIds(evt.Target);
+                    if (evt.Target == MessageTarget.AllPlayers || evt.Target == MessageTarget.Server && _actAsServer
+                        || Array.IndexOf(targetIds, LocalClient.ClientId) > -1)
+                    {
+                        _receiveQueue.Enqueue(serializedEvent);
+                    }
                 }
             }
             
