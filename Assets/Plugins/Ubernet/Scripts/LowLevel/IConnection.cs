@@ -53,7 +53,7 @@ namespace Skaillz.Ubernet
         /// <summary>
         /// The interval between auto-pings in seconds. Set it to zero to disable auto pinging.
         /// </summary>
-        float AutoPingInterval { get; }
+        float AutoPingInterval { get; set; }
         
         /// <summary>
         /// Returns whether the connection supports host migration.

@@ -68,7 +68,7 @@ namespace Skaillz.Ubernet.Providers.Mock
             
             _sendQueue.Enqueue(evt);
         }
-        
+
         public override void Update()
         {
             if (!SendEvents)

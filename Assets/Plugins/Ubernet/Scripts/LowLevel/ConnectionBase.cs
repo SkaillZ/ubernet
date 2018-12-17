@@ -46,7 +46,7 @@ namespace Skaillz.Ubernet
         public IObservable<NetworkEvent> OnEvent => EventSubject.AsObservable();
 
         private IDisposable _autoPingTimingSubscription;
-        private IDisposable _pongSubscription;
+        private IDisposable _pingSubscription;
         private long _currentRoundTripTime;
         private float _autoPingInterval = 1f;
 
@@ -64,26 +64,34 @@ namespace Skaillz.Ubernet
 
         public abstract void SendEvent(byte code, object data, IMessageTarget target, bool reliable = true);
 
-        public IObservable<long> Ping(IClient client)
+        public virtual IObservable<long> Ping(IClient client)
         {
-            var stopWatch = new Stopwatch();
-            stopWatch.Start();
-            
-            var subscription = OnEvent.First(e => e.SenderId == client.ClientId && e.Code == DefaultEvents.Pong)
-                .Timeout(TimeSpan.FromSeconds(PingTimeout))
-                .Select(e =>
-                {
-                    stopWatch.Stop();
-                    return stopWatch.ElapsedMilliseconds;
-                });
-
-            // BUG: passing null currently leads to an error in PhotonRoomConnection
-            SendEvent(DefaultEvents.Ping, 0, client);
-
-            return subscription;
+            return Observable.Create<long>(observer =>
+            {
+                var stopWatch = new Stopwatch();
+                stopWatch.Start();
+                
+                OnEvent.First(e => e.SenderId == client.ClientId && e.Code == DefaultEvents.Pong)
+                    .Timeout(TimeSpan.FromSeconds(PingTimeout))
+                    .Select(e =>
+                    {
+                        stopWatch.Stop();
+                        return stopWatch.ElapsedMilliseconds;
+                    })
+                    .Subscribe(time =>
+                    {
+                        observer.OnNext(time);
+                        observer.OnCompleted();
+                    });
+                
+                // BUG: passing null currently leads to an error in PhotonRoomConnection
+                SendEvent(DefaultEvents.Ping, 0, client);
+                
+                return Disposable.Create(observer.OnCompleted);
+            });
         }
         
-        public IObservable<long> PingServer()
+        public virtual IObservable<long> PingServer()
         {
             return Ping(Server).Do(rtt => _currentRoundTripTime = rtt);
         }
@@ -115,17 +123,18 @@ namespace Skaillz.Ubernet
 
         protected void RespondToPings()
         {
-            RegisterAutoPing();
-            
-            _pongSubscription = OnEvent.Where(e => e.Code == DefaultEvents.Ping)
+            _pingSubscription = OnEvent.Where(e => e.Code == DefaultEvents.Ping)
                 .Subscribe(e =>
                 {
                     SendEvent(DefaultEvents.Pong, 0, new Client(e.SenderId));
                 });
+            
+            RegisterAutoPing();
         }
 
         protected void RegisterAutoPing()
         {
+            
             if (_autoPingTimingSubscription != null)
             {
                 _autoPingTimingSubscription.Dispose();
@@ -168,7 +177,7 @@ namespace Skaillz.Ubernet
 
         public virtual IObservable<IConnection> Disconnect()
         {
-            _pongSubscription?.Dispose();
+            _pingSubscription?.Dispose();
             _autoPingTimingSubscription?.Dispose();
             return Observable.Return(this);
         }
