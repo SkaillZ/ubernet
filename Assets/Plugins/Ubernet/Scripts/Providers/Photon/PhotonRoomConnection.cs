@@ -7,38 +7,23 @@ using UniRx;
 
 namespace Skaillz.Ubernet.Providers.Photon
 {
-    // TODO: use dictionary to store clients
-    public class PhotonRoomConnection : IConnection
+    public class PhotonRoomConnection : ConnectionBase
     {
         private const byte PhotonEventCode = 100;
 
         private readonly LoadBalancingClient _photonClient;
-        // TODO: use dictionary
-        private List<IClient> _clients = new List<IClient>();
         
-        private readonly ISubject<DisconnectReason> _disconnectedSubject = new Subject<DisconnectReason>();
-        private readonly ISubject<IClient> _playerJoinedSubject = new Subject<IClient>();
-        private readonly ISubject<IClient> _playerLeftSubject = new Subject<IClient>();
-        private readonly ISubject<IClient> _hostMigratedSubject = new Subject<IClient>();
-        private readonly ISubject<NetworkEvent> _eventSubject = new Subject<NetworkEvent>();
-        
-        private readonly IClient _localClient = new Client(-1);
-        private IClient _server = new Client(-1);
         private bool _sendEvents = true;
 
-        public ISerializer Serializer { get; set; }
+        public override IClient Server { get; protected set; } = new Client(-1);
+        public override bool IsConnected => _photonClient.State == ClientState.Joined && _photonClient.IsConnectedAndReady;
+        public override double ServerTime => _photonClient.loadBalancingPeer.ServerTimeInMilliSeconds / 1000.0;
+
         public LoadBalancingClient PhotonClient => _photonClient;
         
-        public IClient LocalClient => _localClient;
-        public IClient Server => _server;
-        public IReadOnlyList<IClient> Clients => _clients;
+        public override bool SupportsHostMigration => true;
 
-        public bool IsConnected => _photonClient.State == ClientState.Joined && _photonClient.IsConnectedAndReady;
-        public double ServerTime => _photonClient.loadBalancingPeer.ServerTimeInMilliSeconds / 1000.0;
-
-        public bool SupportsHostMigration => true;
-
-        public bool SendEvents
+        public override bool SendEvents
         {
             get
             {
@@ -50,12 +35,6 @@ namespace Skaillz.Ubernet.Providers.Photon
                 _sendEvents = value;
             }
         }
-
-        public IObservable<DisconnectReason> OnDisconnected => _disconnectedSubject.AsObservable();
-        public IObservable<IClient> OnClientJoin => _playerJoinedSubject.AsObservable();
-        public IObservable<IClient> OnClientLeave => _playerLeftSubject.AsObservable();
-        public IObservable<IClient> OnHostMigration => _hostMigratedSubject.AsObservable();
-        public IObservable<NetworkEvent> OnEvent => _eventSubject.AsObservable();
 
         /// <summary>
         /// Creates a new connection to the given <see cref="LoadBalancingClient"/>.
@@ -70,9 +49,11 @@ namespace Skaillz.Ubernet.Providers.Photon
             
             InitializeEvents();
             FillRoom();
+            
+            RespondToPings();
         }
 
-        public void Update()
+        public override void Update()
         {
             if (_photonClient.State != ClientState.Disconnected && SendEvents)
             {
@@ -81,8 +62,10 @@ namespace Skaillz.Ubernet.Providers.Photon
         }
 
         /// <inheritdoc cref="Skaillz.Ubernet.IDisconnectable.Disconnect()"/>
-        public IObservable<IConnection> Disconnect()
+        public override IObservable<IConnection> Disconnect()
         {
+            base.Disconnect();
+            
             var observable = PhotonUtils.CreateObservableForExpectedStateChange(_photonClient,
                 expectedState: ClientState.ConnectedToMasterserver, returnValue: this);
             
@@ -91,12 +74,7 @@ namespace Skaillz.Ubernet.Providers.Photon
             return observable;
         }
 
-        public IClient GetClient(int clientId)
-        {
-            return _clients.SingleOrDefault(client => client.ClientId == clientId);
-        }
-
-        public void SendEvent(byte code, object data, IMessageTarget target, bool reliable = true)
+        public override void SendEvent(byte code, object data, IMessageTarget target, bool reliable = true)
         {
             if (_photonClient.CurrentRoom == null)
             {
@@ -121,16 +99,7 @@ namespace Skaillz.Ubernet.Providers.Photon
             }
             else
             {
-                if (target is IClientIdResolvable)
-                {
-                    var resolvable = (IClientIdResolvable) target;
-                    targetClients = new[] {resolvable.ClientId};
-                }
-                else if (target is IClientIdListResolvable)
-                {
-                    var resolvable = (IClientIdListResolvable) target;
-                    targetClients = resolvable.GetClientIds();
-                }
+                targetClients = ResolveClientIds(target);
             }
 
             var options = new RaiseEventOptions
@@ -144,13 +113,13 @@ namespace Skaillz.Ubernet.Providers.Photon
                 reliable, options);
         }
 
-        public void MigrateHost(int newHostId)
+        public override void MigrateHost(int newHostId)
         {
-            if (!this.IsServer(_localClient))
+            if (!this.IsServer(LocalClientRef))
             {
                 throw new InvalidOperationException("Only the server is allowed perform host migration.");
             }
-            MigrateHost(newHostId, _server.ClientId, true);
+            MigrateHost(newHostId, Server.ClientId, true);
         }
         
         private void InitializeEvents()
@@ -160,7 +129,7 @@ namespace Skaillz.Ubernet.Providers.Photon
                 if (state != ClientState.Joined)
                 {
                     var reason = PhotonUtils.ConvertPhotonDisconnectCause(_photonClient.DisconnectedCause);
-                    _disconnectedSubject.OnNext(reason);
+                    DisconnectedSubject.OnNext(reason);
                 }
             };
 
@@ -176,9 +145,9 @@ namespace Skaillz.Ubernet.Providers.Photon
                         if (data.Parameters.ContainsKey(ParameterCode.MasterClientId))
                         {
                             int newHostId = (int) data.Parameters[ParameterCode.MasterClientId];
-                            if (newHostId != _server.ClientId)
+                            if (newHostId != Server.ClientId)
                             {
-                                MigrateHost(newHostId, _server.ClientId, false);
+                                MigrateHost(newHostId, Server.ClientId, false);
                             }
                         }
                         break;
@@ -187,12 +156,12 @@ namespace Skaillz.Ubernet.Providers.Photon
                         if (properties.ContainsKey(GamePropertyKey.MasterClientId))
                         {
                             int newHostId = (int) properties[GamePropertyKey.MasterClientId];
-                            MigrateHost(newHostId, _server.ClientId, false);
+                            MigrateHost(newHostId, Server.ClientId, false);
                         }
                         break;
                     case PhotonEventCode:
                         var evt = Serializer.Deserialize((byte[]) data.Parameters[ParameterCode.Data]);
-                        _eventSubject.OnNext(evt);
+                        EventSubject.OnNext(evt);
                         break;
                 }
             };
@@ -200,15 +169,18 @@ namespace Skaillz.Ubernet.Providers.Photon
 
         private void MigrateHost(int newHostId, int oldHostId, bool broadcast)
         {
-            if (broadcast)
+            if (ClientDict.ContainsKey(newHostId))
             {
-                var newProperties = new Hashtable {{GamePropertyKey.MasterClientId, newHostId}};
-                var expectedProperties = new Hashtable {{GamePropertyKey.MasterClientId, oldHostId}};
-                SetRoomProperties(newProperties, expectedProperties);
-            }
+                if (broadcast)
+                {
+                    var newProperties = new Hashtable {{GamePropertyKey.MasterClientId, newHostId}};
+                    var expectedProperties = new Hashtable {{GamePropertyKey.MasterClientId, oldHostId}};
+                    SetRoomProperties(newProperties, expectedProperties);
+                }
 
-            _server = _clients.Single(c => c.ClientId == newHostId);
-            _hostMigratedSubject.OnNext(_server);
+                Server = ClientDict[newHostId];
+                HostMigratedSubject.OnNext(Server);
+            }
         }
         
         private bool SetRoomProperties(Hashtable newProperties, Hashtable expectedProperties = null)
@@ -229,44 +201,11 @@ namespace Skaillz.Ubernet.Providers.Photon
 
         private void FillRoom()
         {
-            _localClient.ClientId = _photonClient.LocalPlayer.ID;
-            _server.ClientId = _photonClient.CurrentRoom.MasterClientId;
+            LocalClientRef.ClientId = _photonClient.LocalPlayer.ID;
+            Server.ClientId = _photonClient.CurrentRoom.MasterClientId;
 
-            _clients = _photonClient.CurrentRoom.Players.Values
-                .Select(player => (IClient) new Client(player.ID)).ToList();
-        }
-        
-        private void AddClient(IClient client, bool broadcast)
-        {
-            _clients.Add(client);
-
-            if (broadcast)
-            {
-                _playerJoinedSubject.OnNext(client);
-            }
-        }
-
-        private void RemoveClient(IClient client)
-        {
-            _clients.Remove(client);
-            _playerLeftSubject.OnNext(client);
-        }
-
-        private void RemoveClient(int playerId)
-        {
-            var player = _clients.Find(p => p.ClientId == playerId);
-            RemoveClient(player);
-        }
-        
-        private NetworkEvent CreateEvent(byte code, object data, IMessageTarget target)
-        {
-            return new NetworkEvent
-            {
-                SenderId = _localClient.ClientId,
-                Code = code,
-                Data = data,
-                Target = target
-            };
+            ClientDict = _photonClient.CurrentRoom.Players.Values
+                .Select(player => (IClient) new Client(player.ID)).ToDictionary(c => c.ClientId);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         /// <exception cref="InvalidOperationException">If the Entity is not initialized</exception>
         public static bool IsLocal(this INetworkEntity entity)
         {
-            if (entity?.Manager == null)
+            if (entity.Manager == null)
             {
                 return false;
             }

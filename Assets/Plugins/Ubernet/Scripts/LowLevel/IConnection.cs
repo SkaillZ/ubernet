@@ -45,6 +45,17 @@ namespace Skaillz.Ubernet
         double ServerTime { get; }
         
         /// <summary>
+        /// The current round trip time from this client to the server in milliseconds.
+        /// </summary>
+        /// This value is updated whenever <see cref="PingServer"/> is called.
+        long CurrentRoundTripTime { get; }
+        
+        /// <summary>
+        /// The interval between auto-pings in seconds. Set it to zero to disable auto pinging.
+        /// </summary>
+        float AutoPingInterval { get; }
+        
+        /// <summary>
         /// Returns whether the connection supports host migration.
         /// </summary>
         /// If true, <see cref="OnHostMigration"/> and <see cref="MigrateHost"/> can be used.
@@ -115,5 +126,18 @@ namespace Skaillz.Ubernet
         /// </param>
         /// <param name="reliable">Whether the event should be sent reliably (if supported by the connection).</param>
         void SendEvent(byte code, object data, IMessageTarget target, bool reliable = true);
+
+        /// <summary>
+        /// Returns the round trip time to the <see cref="Server"/> in milliseconds.
+        /// </summary>
+        /// <returns>An Observable that returns the round trip time in milliseconds</returns>
+        IObservable<long> PingServer();
+
+        /// <summary>
+        /// Returns the round trip time to the given Client in milliseconds.
+        /// </summary>
+        /// <param name="client">The client to ping</param>
+        /// <returns>An Observable that returns the round trip time in milliseconds</returns>
+        IObservable<long> Ping(IClient client);
     }
 }

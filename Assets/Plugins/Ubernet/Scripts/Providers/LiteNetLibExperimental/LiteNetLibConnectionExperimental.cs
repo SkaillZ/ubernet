@@ -8,43 +8,21 @@ using UnityEngine.Profiling;
 
 namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
 {
-    public class LiteNetLibConnectionExperimental : IConnection
+    public class LiteNetLibConnectionExperimental : ConnectionBase
     {
-        private readonly Dictionary<int, IClient> _clients = new Dictionary<int, IClient>();
-        
-        private readonly ISubject<DisconnectReason> _disconnectedSubject = new Subject<DisconnectReason>();
-        private readonly ISubject<IClient> _playerJoinedSubject = new Subject<IClient>();
-        private readonly ISubject<IClient> _playerLeftSubject = new Subject<IClient>();
-        private readonly ISubject<IClient> _hostMigratedSubject = new Subject<IClient>();
-        private readonly ISubject<NetworkEvent> _eventSubject = new Subject<NetworkEvent>();
-        
-        private readonly IClient _localClient = new Client(-1);
-        private readonly IClient _server = new Client(-1);
-
         private EventBasedNetListener _listener;
         private NetManager _manager;
         private readonly List<NetPeer> _peers = new List<NetPeer>();
 
         private bool _isServer;
 
-        public ISerializer Serializer { get; set; }
-        
-        public IClient LocalClient => _localClient;
-        public IClient Server => _server;
-        public IReadOnlyList<IClient> Clients => _clients.Values.ToList();
+        public override IClient Server { get; protected set; } = new Client(-1);
+        public override bool IsConnected => _manager != null && _manager.IsRunning;
+        public override double ServerTime => 0;
 
-        public bool IsConnected => _manager != null && _manager.IsRunning;
-        public double ServerTime => 0;
+        public override bool SupportsHostMigration => false;
 
-        public bool SupportsHostMigration => false;
-
-        public bool SendEvents { get; set; } = true;
-
-        public IObservable<DisconnectReason> OnDisconnected => _disconnectedSubject.AsObservable();
-        public IObservable<IClient> OnClientJoin => _playerJoinedSubject.AsObservable();
-        public IObservable<IClient> OnClientLeave => _playerLeftSubject.AsObservable();
-        public IObservable<IClient> OnHostMigration => _hostMigratedSubject.AsObservable();
-        public IObservable<NetworkEvent> OnEvent => _eventSubject.AsObservable();
+        public override bool SendEvents { get; set; } = true;
 
         public static LiteNetLibConnectionExperimental CreateServer(int port, int maxConnections, string version, bool enableNatPunch)
         {
@@ -75,14 +53,15 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
             _manager.NatPunchEnabled = enableNatPunch;
             _manager.UpdateTime = 0;
             InitializeEvents();
+            RespondToPings();
             
             if (!_manager.Start(port))
             {
                 throw new ConnectionException($"Could not initialize server on port {port}.");
             }
             
-            _localClient.ClientId = 1;
-            _server.ClientId = 1;
+            LocalClientRef.ClientId = 1;
+            Server.ClientId = 1;
             _isServer = true;
             
             Profiler.EndSample();
@@ -98,6 +77,7 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
             _manager.NatPunchEnabled = enableNatPunch;
             _manager.UpdateTime = 0;
             InitializeEvents();
+            RespondToPings();
             
             if (!_manager.Start())
             {
@@ -108,8 +88,8 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
             _manager.Connect(address, port);
             
             // TODO: support more players
-            _localClient.ClientId = 2;
-            _server.ClientId = 1;
+            LocalClientRef.ClientId = 2;
+            Server.ClientId = 1;
             _isServer = false;
 
             var firstPeer = _manager.GetFirstPeer();
@@ -120,7 +100,7 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
             Profiler.EndSample();
         }
 
-        public void Update()
+        public override void Update()
         {
             if (SendEvents)
             {
@@ -130,8 +110,10 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
         }
 
         /// <inheritdoc cref="IDisconnectable{T}.Disconnect()"/>
-        public IObservable<IConnection> Disconnect()
+        public override IObservable<IConnection> Disconnect()
         {
+            base.Disconnect();
+            
             return Observable.Start<IConnection>(() =>
             {
                 _manager.Stop();
@@ -139,36 +121,17 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
             }, Scheduler.MainThread);
         }
 
-        public IClient GetClient(int clientId)
-        {
-            if (!_clients.ContainsKey(clientId))
-            {
-                return null;
-            }
-            return _clients[clientId];
-        }
-
-        public void SendEvent(byte code, object data, IMessageTarget target, bool reliable = true)
+        public override void SendEvent(byte code, object data, IMessageTarget target, bool reliable = true)
         {
             var evt = CreateEvent(code, data, target);
             
             // TODO: handle targets properly
             
-            int[] targetClients = null;
-            if (target is IClientIdResolvable)
-            {
-                var resolvable = (IClientIdResolvable) target;
-                targetClients = new[] {resolvable.ClientId};
-            }
-            else if (target is IClientIdListResolvable)
-            {
-                var resolvable = (IClientIdListResolvable) target;
-                targetClients = resolvable.GetClientIds();
-            }
+            int[] targetClients = ResolveClientIds(target);
 
             if (target == MessageTarget.AllPlayers || targetClients != null && targetClients.Contains(_isServer ? 1 : 2))
             {
-                _eventSubject.OnNext(evt);
+                EventSubject.OnNext(evt);
             }
             
             _manager.GetPeersNonAlloc(_peers);
@@ -183,7 +146,7 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
             }
         }
 
-        public void MigrateHost(int newHostId)
+        public override void MigrateHost(int newHostId)
         {
             throw new NotImplementedException();
         }
@@ -195,7 +158,7 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
                 var bytes = reader.Data;
                 var evt = Serializer.Deserialize(bytes);
 
-                _eventSubject.OnNext(evt);
+                EventSubject.OnNext(evt);
             };
 
             _listener.NetworkReceiveUnconnectedEvent += (endpoint, reader, type) =>
@@ -206,7 +169,11 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
             _listener.PeerConnectedEvent += peer =>
             {
                 Debug.Log("Peer connected on " + _manager.LocalPort + " :" + peer.EndPoint.Host + ":" + peer.EndPoint.Port);
-                AddClient(new Client(_isServer ? 2 : 1), true);
+                var client = new Client(_isServer ? 2 : 1);
+                if (!ClientDict.ContainsKey(client.ClientId))
+                {
+                    AddClient(client, true);
+                }
             };
 
             _listener.PeerDisconnectedEvent += (peer, info) =>
@@ -218,42 +185,6 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
             _listener.NetworkErrorEvent += (endpoint, code) =>
             {
                 Debug.LogError("Error with code: " + code);
-            };
-        }
-        
-        private void AddClient(IClient client, bool broadcast)
-        {
-            _clients[client.ClientId] = client;
-
-            if (broadcast)
-            {
-                _playerJoinedSubject.OnNext(client);
-            }
-        }
-
-        private void RemoveClient(IClient client)
-        {
-            _clients.Remove(client.ClientId);
-            _playerLeftSubject.OnNext(client);
-        }
-
-        private void RemoveClient(int playerId)
-        {
-            if (_clients.ContainsKey(playerId))
-            {
-                var player = _clients[playerId];
-                RemoveClient(player);
-            }
-        }
-        
-        private NetworkEvent CreateEvent(byte code, object data, IMessageTarget target)
-        {
-            return new NetworkEvent
-            {
-                SenderId = _localClient.ClientId,
-                Code = code,
-                Data = data,
-                Target = target
             };
         }
     }

@@ -5,38 +5,27 @@ using UniRx;
 
 namespace Skaillz.Ubernet.Providers.Mock
 {
-    public class MockConnection : IConnection
+    public class MockConnection : ConnectionBase
     {
-        private readonly ISubject<DisconnectReason> _disconnectedSubject = new Subject<DisconnectReason>();
-        private readonly ISubject<IClient> _playerJoinedSubject = new Subject<IClient>();
-        private readonly ISubject<IClient> _playerLeftSubject = new Subject<IClient>();
-        private readonly ISubject<IClient> _hostMigratedSubject = new Subject<IClient>();
-        private readonly ISubject<NetworkEvent> _eventSubject = new Subject<NetworkEvent>();
-        
-        public ISerializer Serializer { get; set; }
-        
-        public IClient LocalClient { get; private set; } = new Client(1);
+        public override IClient Server
+        {
+            get => Network?.Server?.LocalClient ?? LocalClient;
+            protected set => throw new NotImplementedException();
+        }
 
-        public IClient Server => Network?.Server?.LocalClient ?? LocalClient;
-
-        public IReadOnlyList<IClient> Clients => Network != null
+        public override IReadOnlyList<IClient> Clients => Network != null
             ? Network.Clients.Select(c => c.LocalClient).ToList()
             : new List<IClient>(new []{ LocalClient });
         
         public MockNetwork Network { get; set; }
-        public bool IsConnected { get; private set; } = true;
+        public override bool IsConnected => _isConnected;
         
-        public double ServerTime => throw new NotImplementedException($"Server time is not implemented on {nameof(MockConnection)}.");
+        public override double ServerTime => throw new NotImplementedException($"Server time is not implemented on {nameof(MockConnection)}.");
 
-        public bool SupportsHostMigration => true;
-        public bool SendEvents { get; set; } = true;
+        public override bool SupportsHostMigration => true;
+        public override bool SendEvents { get; set; } = true;
 
-        public IObservable<DisconnectReason> OnDisconnected => _disconnectedSubject.AsObservable();
-        public IObservable<IClient> OnClientJoin => _playerJoinedSubject.AsObservable();
-        public IObservable<IClient> OnClientLeave => _playerLeftSubject.AsObservable();
-        public IObservable<IClient> OnHostMigration => _hostMigratedSubject.AsObservable();
-        public IObservable<NetworkEvent> OnEvent => _eventSubject.AsObservable();
-        
+        private bool _isConnected = true;
         private readonly bool _actAsServer;
         private readonly Queue<NetworkEvent> _sendQueue = new Queue<NetworkEvent>();
         private readonly Queue<byte[]> _receiveQueue = new Queue<byte[]>();
@@ -47,33 +36,27 @@ namespace Skaillz.Ubernet.Providers.Mock
             Serializer = serializer ?? new Serializer();
             Network = network;
             Network?.Connect(this, actAsServer);
+            
+            RespondToPings();
         }
         
-        public IObservable<IConnection> Disconnect()
+        public override IObservable<IConnection> Disconnect()
         {
-            IsConnected = false;
+            base.Disconnect();
+            
+            _isConnected = false;
             Network?.Disconnect(this);
             _sendQueue.Clear();
             _receiveQueue.Clear();
             return Observable.Return(this);
         }
 
-        public void MigrateHost(int newHostId)
+        public override void MigrateHost(int newHostId)
         {
             Network.MigrateHost(newHostId);
         }
 
-        public IClient GetClient(int clientId)
-        {
-            if (LocalClient.ClientId == clientId)
-            {
-                return LocalClient;
-            }
-
-            return Network?.Clients?.FirstOrDefault(c => c.LocalClient.ClientId == clientId)?.LocalClient;
-        }
-
-        public void SendEvent(byte code, object data, IMessageTarget target, bool reliable = true)
+        public override void SendEvent(byte code, object data, IMessageTarget target, bool reliable = true)
         {
             var evt = new NetworkEvent
             {
@@ -86,7 +69,7 @@ namespace Skaillz.Ubernet.Providers.Mock
             _sendQueue.Enqueue(evt);
         }
         
-        public void Update()
+        public override void Update()
         {
             if (!SendEvents)
             {
@@ -110,7 +93,7 @@ namespace Skaillz.Ubernet.Providers.Mock
             while (_receiveQueue.Count > 0)
             {
                 var evt = _receiveQueue.Dequeue();
-                _eventSubject.OnNext(Serializer.Deserialize(evt));
+                EventSubject.OnNext(Serializer.Deserialize(evt));
             }
         }
         
@@ -133,7 +116,7 @@ namespace Skaillz.Ubernet.Providers.Mock
                 
                 foreach (var client in Clients)
                 {
-                    client._playerJoinedSubject.OnNext(connection.LocalClient);
+                    client.PlayerJoinedSubject.OnNext(connection.LocalClient);
                 }
             }
 
@@ -147,10 +130,10 @@ namespace Skaillz.Ubernet.Providers.Mock
                 
                 foreach (var client in Clients)
                 {
-                    client._playerLeftSubject.OnNext(connection.LocalClient);
+                    client.PlayerLeftSubject.OnNext(connection.LocalClient);
                 }
                 
-                connection._disconnectedSubject.OnNext(DisconnectReason.CleanDisconnect);
+                connection.DisconnectedSubject.OnNext(DisconnectReason.CleanDisconnect);
             }
 
             public void SendEvent(NetworkEvent evt, ISerializer serializer)
@@ -200,7 +183,7 @@ namespace Skaillz.Ubernet.Providers.Mock
 
                 foreach (var mockConnection in Clients)
                 {
-                    mockConnection._hostMigratedSubject.OnNext(Server.LocalClient);
+                    mockConnection.HostMigratedSubject.OnNext(Server.LocalClient);
                 }
             }
         }

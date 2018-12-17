@@ -2,6 +2,9 @@
 {
     public static class DefaultEvents
     {
+        public const byte Ping = 230;
+        public const byte Pong = 231;
+        
         public const byte NetworkEntityCreate = 240;
         public const byte NetworkEntityDestroy = 241;
         public const byte NetworkEntityUpdate = 242;
