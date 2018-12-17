@@ -1,0 +1,11 @@
+{
+  "name": "net.skaillz.ubernet.core",
+  "displayName": "Ubernet Core",
+  "version": "0.0.1-preview.1",
+  "unity": "2018.2",
+  "description": "The Ubernet Core Library contains all scripts required to run Ubernet with any provider.",
+  "keywords": [
+      "networking"
+  ],
+  "category": "Unity"
+}

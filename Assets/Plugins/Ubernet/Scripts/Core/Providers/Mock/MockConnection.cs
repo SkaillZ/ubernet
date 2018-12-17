@@ -34,10 +34,10 @@ namespace Skaillz.Ubernet.Providers.Mock
         {
             _actAsServer = actAsServer;
             Serializer = serializer ?? new Serializer();
+            LocalClient.ClientId = 1;
+            
             Network = network;
             Network?.Connect(this, actAsServer);
-
-            LocalClient.ClientId = 1;
 
             RespondToPings();
         }

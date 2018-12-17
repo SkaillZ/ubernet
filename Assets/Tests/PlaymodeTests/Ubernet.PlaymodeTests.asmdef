@@ -1,7 +1,7 @@
 {
     "name": "Ubernet.PlaymodeTests",
     "references": [
-        "Ubernet",
+        "Ubernet.Core",
         "Ubernet.Providers.LiteNetLibExperimental",
         "Ubernet.Providers.Photon",
         "UniRx"

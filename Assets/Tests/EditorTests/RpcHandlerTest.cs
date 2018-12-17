@@ -3,6 +3,7 @@ using System.IO;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using Skaillz.Ubernet.NetworkEntities;
+using UniRx;
 
 namespace Skaillz.Ubernet.Tests
 {
@@ -19,6 +20,13 @@ namespace Skaillz.Ubernet.Tests
 
             _manager.SetLocalPlayer(new DefaultPlayer());
             _manager2.SetLocalPlayer(new DefaultPlayer());
+        }
+        
+        [TearDown]
+        public void AfterEach()
+        {
+            _manager.Connection.Disconnect().Subscribe();
+            _manager2.Connection.Disconnect().Subscribe();
         }
 
         [Test]

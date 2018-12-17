@@ -15,8 +15,8 @@ public static class PackageBuilder
     public const string ScriptsDirectoryName = "Scripts";
     public const string ExtrasDirectoryName = "Extras";
     public const string ProvidersDirectoryName = "Providers";
-    public const string MockDirectoryName = "Mock";
 
+    public const string CoreDirectoryName = "Core";
     public const string PhotonProviderDirectoryName = "Photon";
     public const string ExperimentalLiteNetLibProviderDirectoryName = "LiteNetLibExperimental";
     
@@ -96,11 +96,14 @@ public static class PackageBuilder
 
     public static void AddJobs(List<Action> jobs)
     {
+        string scriptsDirectory = $"{BaseDirectory}/{ScriptsDirectoryName}";
+        
         // Build core package
-        jobs.Add(() => AssetDatabase.ExportPackage(GatherCorePackageDependencies(), $"{BuildDirectory}/Ubernet.Core.unitypackage",
+        jobs.Add(() => AssetDatabase.ExportPackage($"{scriptsDirectory}/{CoreDirectoryName}", 
+            $"{BuildDirectory}/Ubernet.Core.unitypackage",
             ExportPackageOptions.Recurse));
 
-        string providersDirectory = $"{BaseDirectory}/{ScriptsDirectoryName}/{ProvidersDirectoryName}";
+        string providersDirectory = $"{scriptsDirectory}/{ProvidersDirectoryName}";
         
         jobs.Add(() => AssetDatabase.ExportPackage($"{providersDirectory}/{PhotonProviderDirectoryName}",
             $"{BuildDirectory}/Ubernet.Providers.Photon.unitypackage", ExportPackageOptions.Recurse));
@@ -110,37 +113,5 @@ public static class PackageBuilder
         
         jobs.Add(() => AssetDatabase.ExportPackage($"{BaseDirectory}/{ScriptsDirectoryName}/{ExtrasDirectoryName}",
             $"{BuildDirectory}/Ubernet.Extras.unitypackage", ExportPackageOptions.Recurse));
-    }
-
-    private static string[] GatherCorePackageDependencies()
-    {
-        var dependencies = new List<string>();
-        
-        var files = Directory.GetFiles(BaseDirectory);
-        var subDirectories = Directory.GetDirectories(BaseDirectory);
-        
-        // Add root files
-        dependencies.AddRange(files);
-        
-        // Special handling for the scripts folder
-        dependencies.AddRange(subDirectories.Where(s => !s.EndsWith(ScriptsDirectoryName)));
-
-        // Add everything in the Scripts folder except the files in Providers
-        var scriptsFiles = Directory.GetFiles($"{BaseDirectory}/{ScriptsDirectoryName}");
-        var scriptsSubDirectories = Directory.GetDirectories($"{BaseDirectory}/{ScriptsDirectoryName}");
-        
-        dependencies.AddRange(scriptsFiles);
-        dependencies.AddRange(scriptsSubDirectories.Where(s => !s.EndsWith(ProvidersDirectoryName)
-            && !s.EndsWith(ExtrasDirectoryName)
-            && !s.EndsWith(InstallerPackagesDirectoryName)));
-        
-        // Only add the Mock directory in Providers
-        var providersFiles = Directory.GetFiles($"{BaseDirectory}/{ScriptsDirectoryName}/{ProvidersDirectoryName}");
-        var providersSubDirectories = Directory.GetDirectories($"{BaseDirectory}/{ScriptsDirectoryName}/{ProvidersDirectoryName}");
-        
-        dependencies.AddRange(providersFiles);
-        dependencies.AddRange(providersSubDirectories.Where(s => s.EndsWith(MockDirectoryName)));
-
-        return dependencies.ToArray();
     }
 }

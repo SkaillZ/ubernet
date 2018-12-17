@@ -1,0 +1,11 @@
+{
+  "name": "net.skaillz.ubernet.extras",
+  "displayName": "Ubernet Extras Package",
+  "version": "0.0.1-preview.1",
+  "unity": "2018.2",
+  "description": "Extras package containing the Matchmaker UI. The Photon and LiteNetLibExperimental packages must be installed to use this package.",
+  "keywords": [
+      "networking"
+  ],
+  "category": "Unity"
+}

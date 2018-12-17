@@ -1,0 +1,11 @@
+{
+  "name": "net.skaillz.ubernet.providers.photon",
+  "displayName": "Ubernet Photon Provider",
+  "version": "0.0.1-preview.1",
+  "unity": "2018.2",
+  "description": "Adds support for the Photon provider. Visit https://www.photonengine.com for more information.",
+  "keywords": [
+      "networking"
+  ],
+  "category": "Unity"
+}

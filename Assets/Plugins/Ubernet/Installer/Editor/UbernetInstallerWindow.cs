@@ -197,6 +197,7 @@ namespace Ubernet.Installer
                 return false;
             }
 
+            #if !UNITY_2018_3_OR_NEWER
             if (!_isIncrementalCompilerInstalled)
             {
                 EditorGUILayout.HelpBox("The incremental compiler must be installed.", MessageType.Error);
@@ -238,6 +239,7 @@ namespace Ubernet.Installer
 
                 return false;
             }
+            #endif
 
             if (_packages.Length == 0)
             {

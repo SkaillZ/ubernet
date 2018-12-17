@@ -1,13 +1,11 @@
 {
-    "name": "Ubernet.Editor",
+    "name": "Ubernet.Core",
     "references": [
-        "Ubernet",
-        "UniRx"
+        "UniRx",
+        "UniRx.Async"
     ],
     "optionalUnityReferences": [],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false
 }

@@ -1,7 +1,7 @@
 {
     "name": "Ubernet.Editor.Tests",
     "references": [
-        "Ubernet",
+        "Ubernet.Core",
         "Ubernet.Editor",
         "UniRx",
         "Ubernet.PlaymodeTests",
