@@ -405,6 +405,14 @@ namespace Skaillz.Ubernet.NetworkEntities
             return _entities[id];
         }
         
+        /// <summary>
+        /// Removes all entities. Useful when loading a new scene after entities were registered for another scene.
+        /// </summary>
+        public void UnregisterAllEntities()
+        {
+            _entities.Clear();
+        }
+        
         private void SendEntityAndPlayerUpdates()
         {
             foreach (var entity in _entities.Values)
@@ -500,17 +508,6 @@ namespace Skaillz.Ubernet.NetworkEntities
                     DestroyPlayerEntities(client.ClientId);
                 }
             });
-        }
-
-        private void DestroyPlayerEntities(int clientId)
-        {
-            foreach (var entity in _entities.Values)
-            {
-                if (entity.OwnerId == clientId)
-                {
-                    UnregisterEntity(entity.Id, false);
-                }
-            }
         }
 
         private void RegisterLocalPlayer()
@@ -670,6 +667,18 @@ namespace Skaillz.Ubernet.NetworkEntities
 
             _entities.Remove(id);
             _entityDestroyedSubject.OnNext(entity);
+        }
+        
+        
+        private void DestroyPlayerEntities(int clientId)
+        {
+            foreach (var entity in _entities.Values)
+            {
+                if (entity.OwnerId == clientId)
+                {
+                    UnregisterEntity(entity.Id, false);
+                }
+            }
         }
 
         private void BroadcastLocalComponentAdd(INetworkEntity entity, INetworkComponent component)

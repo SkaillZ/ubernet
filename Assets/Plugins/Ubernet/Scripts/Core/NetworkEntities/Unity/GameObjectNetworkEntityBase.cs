@@ -117,7 +117,10 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 
         protected virtual void OnDestroy()
         {
-            Manager?.UnregisterEntity(Id, false);
+            if (Manager != null && Manager.IsEntityRegistered(this))
+            {
+                Manager.UnregisterEntity(Id, false);
+            }
         }
 
         public override string ToString()

@@ -90,9 +90,14 @@ namespace Skaillz.Ubernet
         IObservable<IClient> OnHostMigration { get; }
         
         /// <summary>
-        /// An observable that can be used to describe to network events
+        /// An observable that can be used to subscribe to network events
         /// </summary>
         IObservable<NetworkEvent> OnEvent { get; }
+        
+        /// <summary>
+        /// Called when an error occurs while auto-pinging. Can be used to find out when the server goes offline.
+        /// </summary>
+        IObservable<Exception> OnAutoPingError { get; }
 
         /// <summary>
         /// Sets the given client as the new host.

@@ -45,6 +45,9 @@ namespace Skaillz.Ubernet
         public IObservable<IClient> OnHostMigration => HostMigratedSubject.AsObservable();
         public IObservable<NetworkEvent> OnEvent => EventSubject.AsObservable();
 
+        public IObservable<Exception> OnAutoPingError => _autoPingErrorSubject.AsObservable();
+
+        private readonly Subject<Exception> _autoPingErrorSubject = new Subject<Exception>();
         private IDisposable _autoPingTimingSubscription;
         private IDisposable _pingSubscription;
         private long _currentRoundTripTime;
@@ -85,7 +88,7 @@ namespace Skaillz.Ubernet
                     });
                 
                 // BUG: passing null currently leads to an error in PhotonRoomConnection
-                SendEvent(DefaultEvents.Ping, 0, client);
+                SendEvent(DefaultEvents.Ping, (byte) 0, client);
                 
                 return Disposable.Create(observer.OnCompleted);
             });
@@ -126,7 +129,7 @@ namespace Skaillz.Ubernet
             _pingSubscription = OnEvent.Where(e => e.Code == DefaultEvents.Ping)
                 .Subscribe(e =>
                 {
-                    SendEvent(DefaultEvents.Pong, 0, new Client(e.SenderId));
+                    SendEvent(DefaultEvents.Pong, (byte) 0, new Client(e.SenderId));
                 });
             
             RegisterAutoPing();
@@ -144,7 +147,7 @@ namespace Skaillz.Ubernet
             if (_autoPingInterval > 0f)
             {
                 _autoPingTimingSubscription = Observable.Interval(TimeSpan.FromSeconds(_autoPingInterval))
-                    .Subscribe(_ => PingServer().Subscribe());
+                    .Subscribe(_ => PingServer().Subscribe(), err => _autoPingErrorSubject.OnNext(err));
             }
         }
 

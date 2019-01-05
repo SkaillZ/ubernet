@@ -101,8 +101,16 @@ namespace Skaillz.Ubernet.NetworkEntities
                 .Where(rpc => rpc.EntityId == _context.Entity.Id && rpc.ComponentId == _context.Id)
                 .Subscribe(rpc =>
                 {
-                    var method = _rpcCodeLookup[rpc.RpcCode];
-                    method.Invoke(_context, rpc.Params);
+                    if (_rpcCodeLookup.ContainsKey(rpc.RpcCode))
+                    {
+                        var method = _rpcCodeLookup[rpc.RpcCode];
+                        method.Invoke(_context, rpc.Params);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"No RPC method found with code {rpc.RpcCode} " +
+                                  $"on component {_context} on entity {_context.Entity}");
+                    }
                 });
         }
 

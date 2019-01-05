@@ -29,6 +29,18 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 			DisconnectingFromMatchmaker
 		}
 
+		public Type PlayerType
+		{
+			get => Type.GetType(_playerType);
+			set => _playerType = value.AssemblyQualifiedName;
+		}
+
+		public bool AutoLoadScenes { get; set; } = true;
+		public IObservable<string> OnLoadLevel => _loadLevelSubject.AsObservable();
+		public NetworkEntityManager EntityManager => _entityManager;
+		public IMatchmaker Matchmaker => _matchmaker;
+		public IConnection Connection => _connection;
+
 		[SerializeField] private string _lobbyScene;
 		[SerializeField] private string _gameScene;
 		[SerializeField] private bool _persistBetweenScenes = true;
@@ -52,6 +64,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 		private string _photonRoomName;
 		private string _liteNetLibAddress = "localhost";
 
+		private readonly Subject<string> _loadLevelSubject = new Subject<string>();
 		private Exception _exception;
 
 		private readonly Rect _screenRect = new Rect(0, 0, 300, Screen.height);
@@ -330,8 +343,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 		{
 			if (game is PhotonAlreadyJoinedGame)
 			{
-				_connection = (await game.ConnectWithPhoton())
-					.AutoUpdate(_photonTickRate);
+				_connection = (await game.ConnectWithPhoton()).AutoUpdate(_photonTickRate);
 			}
 			
 			_connection.RegisterUnityDefaultTypes();
@@ -340,6 +352,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 				.Subscribe(_ =>
 				{
 					Debug.LogWarning("Disconnected");
+					
 					if (!string.IsNullOrEmpty(_lobbyScene) && SceneManager.GetActiveScene().name != _lobbyScene)
 					{
 						SceneManager.LoadScene(_lobbyScene);
@@ -375,19 +388,21 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 		{
 			Debug.Log($"Loading scene: {sceneName}");
 			
-			_entityManager.Connection.SendEvents = false;
 			if (send)
 			{
 				_entityManager.SendEvent(LoadSceneEventCode, sceneName);
 			}
 
-			Debug.Log("LoadScene start");
-			SceneManager.LoadScene(sceneName);
-			Debug.Log("LoadScene finish");
-			_entityManager.Connection.SendEvents = true;
+			_loadLevelSubject.OnNext(sceneName);
+			if (AutoLoadScenes)
+			{
+				_entityManager.Connection.SendEvents = false;
 
-			Debug.Log($"Loaded scene: {sceneName}");
-
+				Debug.Log("LoadScene start");
+				SceneManager.LoadScene(sceneName);
+				Debug.Log($"Loaded scene: {sceneName}");
+				_entityManager.Connection.SendEvents = true;
+			}
 		}
 
 		private async void HandleErrors(Task operation)
@@ -410,8 +425,7 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 			{
 				if (_connection != null)
 				{
-					await _connection.Disconnect()
-						.Timeout(TimeSpan.FromMilliseconds(RecoveryTimeout));
+					await _connection.Disconnect().Timeout(TimeSpan.FromMilliseconds(RecoveryTimeout));
 				}
 			}
 			catch (Exception e)
