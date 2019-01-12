@@ -68,8 +68,11 @@ namespace Skaillz.Ubernet.NetworkEntities
 
         internal override void SetValue(object value)
         {
-            _value = (T) value;
-            SetDirty();
+            if (!Equals(value, _value))
+            {
+                _value = (T) value;
+                SetDirty();
+            }
         }
     }
     

@@ -28,6 +28,7 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
                 EditorGUILayout.EndHorizontal();
                 
                 GUI.enabled = false;
+                
                 EditorGUILayout.PropertyField(_idProp, new GUIContent("Network Component ID"));
                 
                 EditorGUILayout.Toggle("Destroy automatically", ((MonoNetworkComponent)target).DestroyAutomatically);
