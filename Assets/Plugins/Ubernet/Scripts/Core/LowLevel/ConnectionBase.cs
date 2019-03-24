@@ -39,6 +39,7 @@ namespace Skaillz.Ubernet
 
         public abstract bool SupportsHostMigration { get; }
         public abstract bool SendEvents { get; set; }
+        
         public IObservable<DisconnectReason> OnDisconnected => DisconnectedSubject.AsObservable();
         public IObservable<IClient> OnClientJoin => PlayerJoinedSubject.AsObservable();
         public IObservable<IClient> OnClientLeave => PlayerLeftSubject.AsObservable();

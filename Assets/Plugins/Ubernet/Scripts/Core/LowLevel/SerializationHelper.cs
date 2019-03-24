@@ -121,19 +121,13 @@ namespace Skaillz.Ubernet
         public void SerializeByteArray(byte[] array, Stream stream)
         {
             SerializeInt(array.Length, stream);
-            foreach (byte b in array)
-            {
-                SerializeByte(b, stream);
-            }
+            stream.Write(array, 0, array.Length);
         }
         
         public void SerializeByteArrayWithByteLength(byte[] array, Stream stream)
         {
             SerializeByte((byte) array.Length, stream);
-            foreach (byte b in array)
-            {
-                SerializeByte(b, stream);
-            }
+            stream.Write(array, 0, array.Length);
         }
 
         public bool DeserializeBool(Stream stream)
@@ -226,11 +220,7 @@ namespace Skaillz.Ubernet
         {
             int length = DeserializeInt(stream);
             byte[] array = new byte[length];
-
-            for (var i = 0; i < array.Length; i++)
-            {
-                array[i] = DeserializeByte(stream);
-            }
+            stream.Read(array, 0, (int) stream.Length);
 
             return array;
         }
@@ -239,11 +229,7 @@ namespace Skaillz.Ubernet
         {
             byte length = DeserializeByte(stream);
             byte[] array = new byte[length];
-
-            for (var i = 0; i < array.Length; i++)
-            {
-                array[i] = DeserializeByte(stream);
-            }
+            stream.Read(array, 0, (int) stream.Length);
 
             return array;
         }

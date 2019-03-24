@@ -10,7 +10,7 @@ namespace Skaillz.Ubernet.Editor.CustomEditors
 	public class PrefabCacheEditor : UnityEditor.Editor
 	{
 		private static readonly string HelpMessage = "Prefabs must be added to the cache before they can be instantiated " +
-			$"over the network with '{nameof(NetworkEntityManager)}.{nameof(UnityUtils.InstantiateFromPrefab)}'.";
+			$"over the network with '{nameof(NetworkEntityManager)}.{nameof(NetworkEntityManager.InstantiateFromPrefab)}'.";
 		
 		private ReorderableList _list;
 	

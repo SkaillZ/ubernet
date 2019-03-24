@@ -21,8 +21,8 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
 
         public short Id
         {
-            get { return _id; }
-            set { _id = value; }
+            get => _id;
+            set => _id = value;
         }
 
         public virtual void Serialize(Stream stream)
@@ -186,12 +186,35 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
                 _rpcHandler.SendRpcUnreliable(methodName, target, parameters);
             }
         }
+        
+        /// <summary>
+        /// Base class for MonoBehaviour-based network components that supports <see cref="SyncedValue"/>s.
+        /// </summary>
+        public abstract class Synced : MonoNetworkComponent
+        {
+            private SyncedValueSerializer _syncedValueSerializer;
+            
+            public override void OnRegister()
+            {
+                _syncedValueSerializer = new SyncedValueSerializer(this, Entity.GetSerializer());
+            }
+            
+            public override void Serialize(Stream stream)
+            {
+                _syncedValueSerializer.Serialize(stream);
+            }
+
+            public override void Deserialize(Stream stream)
+            {
+                _syncedValueSerializer.Deserialize(stream);
+            }
+        }
 
         /// <summary>
         /// Base class for MonoBehaviour-based network components that provides RPC functionality and supports
         /// <see cref="SyncedValue"/>s.
         /// </summary>
-        public abstract class Synced : Rpc
+        public abstract class SyncedRpc : Rpc
         {
             private SyncedValueSerializer _syncedValueSerializer;
             

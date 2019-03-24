@@ -15,6 +15,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         protected readonly ISubject<INetworkComponent> _componentRemoveSubject = new Subject<INetworkComponent>();
 
         protected readonly SerializationHelper _helper = new SerializationHelper();
+        private readonly Dictionary<short, byte[]> _componentsToSerialize = new Dictionary<short, byte[]>();
 
         public int Id { get; set; }
         public int OwnerId { get; set; }
@@ -27,6 +28,7 @@ namespace Skaillz.Ubernet.NetworkEntities
 
         public IObservable<INetworkComponent> OnComponentAdd => _componentAddSubject.AsObservable();
         public IObservable<INetworkComponent> OnComponentRemove => _componentRemoveSubject.AsObservable();
+
 
         public NetworkEntity()
         {
@@ -95,7 +97,8 @@ namespace Skaillz.Ubernet.NetworkEntities
         // TODO: refactor
         public virtual void Serialize(Stream stream)
         {
-            var componentsToSerialize = new Dictionary<short, byte[]>();
+            _componentsToSerialize.Clear();
+            
             foreach (var component in _components.Values)
             {
                 var id = component.Id;
@@ -104,25 +107,25 @@ namespace Skaillz.Ubernet.NetworkEntities
                 using (var memStream = new MemoryStream())
                 {
                     component.Serialize(memStream);
-                    bytes = memStream.ToArray();
+                    bytes = memStream.GetBuffer();
                 }
 
                 if (!_componentCaches.ContainsKey(id)|| !UbernetUtils.AreArraysEqual(bytes, _componentCaches[id])
-                    || !UpdateWhenChanged)
+                    || !UpdateWhenChanged) 
                 {
-                    componentsToSerialize[id] = bytes;
+                    _componentsToSerialize[id] = bytes;
                     _componentCaches[id] = bytes;
                 }
             }
             
-            int updatedNum = componentsToSerialize.Count;
+            int updatedNum = _componentsToSerialize.Count;
 
             if (updatedNum > 0 || !UpdateWhenChanged) // Only streams with content are sent
             {
                 _helper.SerializeShort((short) updatedNum, stream);
-                foreach (var pair in componentsToSerialize)
+                foreach (var pair in _componentsToSerialize)
                 {
-                    var id = pair.Key;
+                    short id = pair.Key;
                     var bytes = pair.Value;
                     
                     _helper.SerializeShort(id, stream);
@@ -137,7 +140,18 @@ namespace Skaillz.Ubernet.NetworkEntities
             for (int i = 0; i < updatedNum; i++)
             {
                 int componentId = _helper.DeserializeShort(stream);
-                _components.Values.First(c => c.Id == componentId).Deserialize(stream);
+                
+                foreach (var pair in _components)
+                {
+                    short id = pair.Key;
+                    var component = pair.Value;
+
+                    if (id == componentId)
+                    {
+                        component.Deserialize(stream);
+                        break;
+                    }
+                }
             }
         }
 

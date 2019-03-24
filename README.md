@@ -488,7 +488,7 @@ public class PlayerHealth : MonoNetworkComponent.Rpc
 
 SyncedValues are variables that are synchronized over the network. **Changes to SyncedValues are only sent if they have been changed by the entity’s owner.**
 
-Derive from `MonoNetworkComponent.Synced` to use SyncedValues. RPCs are also supported.
+Derive from `MonoNetworkComponent.Synced` to use SyncedValues. To use both SyncedValues and RPCs, inherit from `MonoNetworkComponent.SyncedRpc`.
 
 SyncedValues are created by passing generic types. All serializable types are supported (see [Serialization](#Serialization)). 
 
