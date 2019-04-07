@@ -3,25 +3,22 @@ using UnityEngine;
 
 namespace Skaillz.Ubernet.DefaultSerializers.Unity
 {
-    public class QuaternionSerializer : ICustomTypeSerializer
+    public class QuaternionSerializer : CustomTypeSerializer<Quaternion>
     {
-        private readonly SerializationHelper _helper = new SerializationHelper();
-        
-        public void Serialize(object value, Stream stream)
+        public override void Serialize(Quaternion value, Stream stream)
         {
-            var quaternion = (Quaternion) value;
-            _helper.SerializeFloat(quaternion.x, stream);
-            _helper.SerializeFloat(quaternion.y, stream);
-            _helper.SerializeFloat(quaternion.z, stream);
-            _helper.SerializeFloat(quaternion.w, stream);
+            SerializationHelper.SerializeFloat(value.x, stream);
+            SerializationHelper.SerializeFloat(value.y, stream);
+            SerializationHelper.SerializeFloat(value.z, stream);
+            SerializationHelper.SerializeFloat(value.w, stream);
         }
 
-        public object Deserialize(Stream stream)
+        public override Quaternion Deserialize(Stream stream)
         {
-            float x = _helper.DeserializeFloat(stream);
-            float y = _helper.DeserializeFloat(stream);
-            float z = _helper.DeserializeFloat(stream);
-            float w = _helper.DeserializeFloat(stream);
+            float x = SerializationHelper.DeserializeFloat(stream);
+            float y = SerializationHelper.DeserializeFloat(stream);
+            float z = SerializationHelper.DeserializeFloat(stream);
+            float w = SerializationHelper.DeserializeFloat(stream);
             return new Quaternion(x, y, z, w);
         }
     }

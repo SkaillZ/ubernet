@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using UniRx;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -23,6 +25,8 @@ namespace Skaillz.Ubernet.NetworkEntities
         [SerializeField, FormerlySerializedAs("_serializedValue")]
         private T _value;
         private readonly ISubject<T> _subject = new Subject<T>();
+
+        private readonly EqualityComparer<T> _equalityComparer = EqualityComparer<T>.Default;
         
         public SyncedValue() : this(default(T))
         {
@@ -35,10 +39,10 @@ namespace Skaillz.Ubernet.NetworkEntities
 
         public T Value
         {
-            get { return _value; }
+            get => _value;
             set
             {
-                if (!Equals(value, _value))
+                if (!_equalityComparer.Equals(_value, value))
                 {
                     _value = value;
                     SetDirty();
@@ -68,9 +72,10 @@ namespace Skaillz.Ubernet.NetworkEntities
 
         internal override void SetValue(object value)
         {
-            if (!Equals(value, _value))
+            var tValue = (T) value;
+            if (!_equalityComparer.Equals(_value, tValue))
             {
-                _value = (T) value;
+                _value = tValue;
                 SetDirty();
             }
         }

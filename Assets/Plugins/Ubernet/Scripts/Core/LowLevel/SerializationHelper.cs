@@ -4,36 +4,36 @@ using System.Text;
 
 namespace Skaillz.Ubernet
 {
-    public class SerializationHelper
+    public static class SerializationHelper
     {
-        private readonly float[] _serializeFloatBuffer = new float[1];
-        private readonly long[] _serializeLongBuffer = new long[1];
-        private readonly double[] _serializeDoubleBuffer = new double[1];
+        private static readonly float[] SerializeFloatBuffer = new float[1];
+        private static readonly long[] SerializeLongBuffer = new long[1];
+        private static readonly double[] SerializeDoubleBuffer = new double[1];
 
-        private readonly byte[] _shortByteBuffer = new byte[2];
-        private readonly byte[] _intByteBuffer = new byte[4];
-        private readonly byte[] _longByteBuffer = new byte[8];
-        private readonly byte[] _floatByteBuffer = new byte[4];
-        private readonly byte[] _doubleByteBuffer = new byte[8];
-        private byte[] _stringByteBuffer = new byte[50];
+        private static readonly byte[] ShortByteBuffer = new byte[2];
+        private static readonly byte[] IntByteBuffer = new byte[4];
+        private static readonly byte[] LongByteBuffer = new byte[8];
+        private static readonly byte[] FloatByteBuffer = new byte[4];
+        private static readonly byte[] DoubleByteBuffer = new byte[8];
+        private static byte[] _stringByteBuffer = new byte[50];
         
-        public void SerializeBool(bool value, Stream stream)
+        public static void SerializeBool(bool value, Stream stream)
         {
             stream.WriteByte(value ? (byte) 1 : (byte) 0);
         }
         
-        public void SerializeByte(byte value, Stream stream)
+        public static void SerializeByte(byte value, Stream stream)
         {
             stream.WriteByte(value);
         }
 
-        public void SerializeShort(short value, Stream stream)
+        public static void SerializeShort(short value, Stream stream)
         {
             stream.WriteByte((byte) ((uint) value >> 8));
             stream.WriteByte((byte) value);
         }
 
-        public void SerializeInt(int value, Stream stream)
+        public static void SerializeInt(int value, Stream stream)
         {
             stream.WriteByte((byte) (value >> 24));
             stream.WriteByte((byte) (value >> 16));
@@ -41,11 +41,11 @@ namespace Skaillz.Ubernet
             stream.WriteByte((byte) value);
         }
 
-        public void SerializeLong(long value, Stream stream)
+        public static void SerializeLong(long value, Stream stream)
         {
-            _serializeLongBuffer[0] = value;
-            Buffer.BlockCopy(_serializeLongBuffer, 0, _longByteBuffer, 0, 8);
-            byte[] buffer = _longByteBuffer;
+            SerializeLongBuffer[0] = value;
+            Buffer.BlockCopy(SerializeLongBuffer, 0, LongByteBuffer, 0, 8);
+            byte[] buffer = LongByteBuffer;
             if (BitConverter.IsLittleEndian)
             {
                 byte num1 = buffer[0];
@@ -64,7 +64,7 @@ namespace Skaillz.Ubernet
             stream.Write(buffer, 0, 8);
         }
 
-        public void SerializeString(string value, Stream stream)
+        public static void SerializeString(string value, Stream stream)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(value);
             if (bytes.Length > short.MaxValue)
@@ -76,29 +76,29 @@ namespace Skaillz.Ubernet
             stream.Write(bytes, 0, bytes.Length);
         }
 
-        public void SerializeFloat(float value, Stream stream)
+        public static void SerializeFloat(float value, Stream stream)
         {
-            _serializeFloatBuffer[0] = value;
-            Buffer.BlockCopy(_serializeFloatBuffer, 0, _floatByteBuffer, 0, 4);
+            SerializeFloatBuffer[0] = value;
+            Buffer.BlockCopy(SerializeFloatBuffer, 0, FloatByteBuffer, 0, 4);
 
             if (BitConverter.IsLittleEndian)
             {
-                byte t1 = _floatByteBuffer[0];
-                byte t2 = _floatByteBuffer[1];
-                _floatByteBuffer[0] = _floatByteBuffer[3];
-                _floatByteBuffer[1] = _floatByteBuffer[2];
-                _floatByteBuffer[2] = t2;
-                _floatByteBuffer[3] = t1;
+                byte t1 = FloatByteBuffer[0];
+                byte t2 = FloatByteBuffer[1];
+                FloatByteBuffer[0] = FloatByteBuffer[3];
+                FloatByteBuffer[1] = FloatByteBuffer[2];
+                FloatByteBuffer[2] = t2;
+                FloatByteBuffer[3] = t1;
             }
 
-            stream.Write(_floatByteBuffer, 0, 4);
+            stream.Write(FloatByteBuffer, 0, 4);
         }
 
-        public void SerializeDouble(double value, Stream stream)
+        public static void SerializeDouble(double value, Stream stream)
         {
-            _serializeDoubleBuffer[0] = value;
-            Buffer.BlockCopy(_serializeDoubleBuffer, 0, _doubleByteBuffer, 0, 8);
-            byte[] buffer = _doubleByteBuffer;
+            SerializeDoubleBuffer[0] = value;
+            Buffer.BlockCopy(SerializeDoubleBuffer, 0, DoubleByteBuffer, 0, 8);
+            byte[] buffer = DoubleByteBuffer;
             if (BitConverter.IsLittleEndian)
             {
                 byte num1 = buffer[0];
@@ -118,54 +118,54 @@ namespace Skaillz.Ubernet
             stream.Write(buffer, 0, 8);
         }
         
-        public void SerializeByteArray(byte[] array, Stream stream)
+        public static void SerializeByteArray(byte[] array, Stream stream)
         {
             SerializeInt(array.Length, stream);
             stream.Write(array, 0, array.Length);
         }
         
-        public void SerializeByteArrayWithByteLength(byte[] array, Stream stream)
+        public static void SerializeByteArrayWithByteLength(byte[] array, Stream stream)
         {
             SerializeByte((byte) array.Length, stream);
             stream.Write(array, 0, array.Length);
         }
 
-        public bool DeserializeBool(Stream stream)
+        public static bool DeserializeBool(Stream stream)
         {
             return (byte) stream.ReadByte() > 0;
         }
 
-        public byte DeserializeByte(Stream stream)
+        public static byte DeserializeByte(Stream stream)
         {
             return (byte) stream.ReadByte();
         }
 
-        public short DeserializeShort(Stream stream)
+        public static short DeserializeShort(Stream stream)
         {
-            byte[] buffer = _shortByteBuffer;
+            byte[] buffer = ShortByteBuffer;
             stream.Read(buffer, 0, 2);
             return (short) (buffer[0] << 8 | buffer[1]);
         }
 
-        public int DeserializeInt(Stream stream)
+        public static int DeserializeInt(Stream stream)
         {
-            byte[] buffer = _intByteBuffer;
+            byte[] buffer = IntByteBuffer;
             stream.Read(buffer, 0, 4);
             return buffer[0] << 24 | buffer[1] << 16 | buffer[2] << 8 | buffer[3];
         }
         
-        public long DeserializeLong(Stream stream)
+        public static long DeserializeLong(Stream stream)
         {
-            byte[] buffer = _longByteBuffer;
+            byte[] buffer = LongByteBuffer;
             stream.Read(buffer, 0, 8);
             if (BitConverter.IsLittleEndian)
-                return (long) _longByteBuffer[0] << 56 | (long) _longByteBuffer[1] << 48 | (long) _longByteBuffer[2] << 40 
-                       | (long) _longByteBuffer[3] << 32 | (long) _longByteBuffer[4] << 24 | (long) _longByteBuffer[5] << 16
-                       | (long) _longByteBuffer[6] << 8 | (long) _longByteBuffer[7];
-            return BitConverter.ToInt64(_longByteBuffer, 0);
+                return (long) LongByteBuffer[0] << 56 | (long) LongByteBuffer[1] << 48 | (long) LongByteBuffer[2] << 40 
+                       | (long) LongByteBuffer[3] << 32 | (long) LongByteBuffer[4] << 24 | (long) LongByteBuffer[5] << 16
+                       | (long) LongByteBuffer[6] << 8 | (long) LongByteBuffer[7];
+            return BitConverter.ToInt64(LongByteBuffer, 0);
         }
 
-        public string DeserializeString(Stream stream)
+        public static string DeserializeString(Stream stream)
         {
             short length = DeserializeShort(stream);
 
@@ -176,9 +176,9 @@ namespace Skaillz.Ubernet
             return Encoding.UTF8.GetString(_stringByteBuffer, 0, length);
         }
 
-        public float DeserializeFloat(Stream stream)
+        public static float DeserializeFloat(Stream stream)
         {
-            byte[] buffer = _floatByteBuffer;
+            byte[] buffer = FloatByteBuffer;
             stream.Read(buffer, 0, 4);
             if (BitConverter.IsLittleEndian)
             {
@@ -193,9 +193,9 @@ namespace Skaillz.Ubernet
             return BitConverter.ToSingle(buffer, 0);
         }
         
-        public double DeserializeDouble(Stream stream)
+        public static double DeserializeDouble(Stream stream)
         {
-            byte[] buffer = _doubleByteBuffer;
+            byte[] buffer = DoubleByteBuffer;
             stream.Read(buffer, 0, 8);
             if (BitConverter.IsLittleEndian)
             {
@@ -216,20 +216,20 @@ namespace Skaillz.Ubernet
             return BitConverter.ToDouble(buffer, 0);
         }
         
-        public byte[] DeserializeByteArray(Stream stream)
+        public static byte[] DeserializeByteArray(Stream stream)
         {
             int length = DeserializeInt(stream);
             byte[] array = new byte[length];
-            stream.Read(array, 0, (int) stream.Length);
+            stream.Read(array, 0, length);
 
             return array;
         }
         
-        public byte[] DeserializeByteArrayWithByteLength(Stream stream)
+        public static byte[] DeserializeByteArrayWithByteLength(Stream stream)
         {
             byte length = DeserializeByte(stream);
             byte[] array = new byte[length];
-            stream.Read(array, 0, (int) stream.Length);
+            stream.Read(array, 0, length);
 
             return array;
         }

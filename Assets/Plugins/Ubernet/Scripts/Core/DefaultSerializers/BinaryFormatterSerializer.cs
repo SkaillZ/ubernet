@@ -3,18 +3,18 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Skaillz.Ubernet.DefaultSerializers
 {
-    public class BinaryFormatterSerializer : ICustomTypeSerializer
+    public class BinaryFormatterSerializer<T> : CustomTypeSerializer<T> where T : class
     {
         private readonly BinaryFormatter _binaryFormatter = new BinaryFormatter();
         
-        public void Serialize(object value, Stream stream)
+        public override void Serialize(T value, Stream stream)
         {
             _binaryFormatter.Serialize(stream, value);
         }
 
-        public object Deserialize(Stream stream)
+        public override T Deserialize(Stream stream)
         {
-            return _binaryFormatter.Deserialize(stream);
+            return (T) _binaryFormatter.Deserialize(stream);
         }
     }
 }

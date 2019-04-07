@@ -8,10 +8,10 @@ namespace Skaillz.Ubernet.DefaultSerializers.Unity
     {
         public static ISerializer RegisterUnityDefaultTypes([NotNull] this ISerializer serializer)
         {
-            serializer.RegisterCustomType(typeof(Vector2), UnityDefaultTypes.Vector2, new Vector2Serializer());
-            serializer.RegisterCustomType(typeof(Vector3), UnityDefaultTypes.Vector3, new Vector3Serializer());
-            serializer.RegisterCustomType(typeof(Quaternion), UnityDefaultTypes.Quaternion, new QuaternionSerializer());
-            serializer.RegisterCustomType(typeof(Color), UnityDefaultTypes.Color, new ColorSerializer());
+            serializer.RegisterCustomType(UnityDefaultTypes.Vector2, new Vector2Serializer());
+            serializer.RegisterCustomType(UnityDefaultTypes.Vector3, new Vector3Serializer());
+            serializer.RegisterCustomType(UnityDefaultTypes.Quaternion, new QuaternionSerializer());
+            serializer.RegisterCustomType(UnityDefaultTypes.Color, new ColorSerializer());
 
             return serializer;
         }

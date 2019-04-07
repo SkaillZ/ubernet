@@ -13,7 +13,7 @@ namespace Skaillz.Ubernet.Tests
         public void BeforeEach()
         {
             _serializer = new Serializer();
-            _serializer.RegisterCustomType(typeof(TestSerializable), new UnityJsonSerializer<TestSerializable>());
+            _serializer.RegisterCustomType(new UnityJsonSerializer<TestSerializable>());
         }
         
         [Test]

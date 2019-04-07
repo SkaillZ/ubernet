@@ -1,7 +1,5 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using NUnit.Framework;
-using ProtoBuf;
 
 namespace Skaillz.Ubernet.Tests
 {
@@ -31,8 +29,8 @@ namespace Skaillz.Ubernet.Tests
         [Test]
         public void SerializesAndDeserializes_CustomTypedArray()
         {
-            _serializer.RegisterProtobufType<TestClass>();
-
+            _serializer.RegisterCustomType(new TestClassSerializer());
+            
             var arr = new[] { new TestClass {Name = "foo"}, new TestClass {Name = "bar"} };
 
             _serializer.Serialize(arr, _stream);
@@ -49,9 +47,9 @@ namespace Skaillz.Ubernet.Tests
         [Test]
         public void SerializesAndDeserializes_ObjectArray()
         {
-            _serializer.RegisterProtobufType<TestClass>();
+            _serializer.RegisterCustomType(new TestClassSerializer());
             
-            var arr = new object[] { 1, 2, "foo", new TestClass {Name = "foo"} };
+            var arr = new object[] { 1, 2, "foo" };
 
             _serializer.Serialize(arr, _stream);
             _stream.Seek(0, SeekOrigin.Begin);
@@ -60,10 +58,24 @@ namespace Skaillz.Ubernet.Tests
             Assert.AreEqual(arr, deserializedArr);
         }
 
-        [ProtoContract]
+        class TestClassSerializer : CustomTypeSerializer<TestClass>
+        {
+            public override void Serialize(TestClass value, Stream stream)
+            {
+                SerializationHelper.SerializeString(value.Name, stream);
+            }
+
+            public override TestClass Deserialize(Stream stream)
+            {
+                return new TestClass
+                {
+                    Name = SerializationHelper.DeserializeString(stream)
+                };
+            }
+        }
+
         class TestClass
         {
-            [ProtoMember(1)]
             public string Name { get; set; }
 
             protected bool Equals(TestClass other)

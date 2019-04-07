@@ -12,7 +12,7 @@ namespace Skaillz.Ubernet.Tests
         public void BeforeEach()
         {
             _serializer = new Serializer();
-            _serializer.RegisterCustomType(typeof(TestSerializable), new BinaryFormatterSerializer());
+            _serializer.RegisterCustomType(new BinaryFormatterSerializer<TestSerializable>());
         }
 
         [Test]

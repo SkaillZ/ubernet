@@ -6,13 +6,11 @@ namespace Skaillz.Ubernet.Tests
 {
     public class SerializationHelperTest
     {
-        private SerializationHelper _helper;
         private Stream _stream;
         
         [SetUp]
         public void BeforeEach()
         {
-            _helper = new SerializationHelper();
             _stream = new MemoryStream();
         }
         
@@ -130,19 +128,19 @@ namespace Skaillz.Ubernet.Tests
             Assert.Throws<NotSupportedException>(() =>
             {
                 string str = new string(new char[short.MaxValue + 1]);
-                _helper.SerializeString(str, _stream);
+                SerializationHelper.SerializeString(str, _stream);
             });
         }
         
         private void SerializesAndDeserializes<T>(string typeName, T value)
         {
             // ReSharper disable PossibleNullReferenceException
-            _helper.GetType().GetMethod($"Serialize{typeName}")
-                .Invoke(_helper, new object[] { value, _stream });
+            typeof(SerializationHelper).GetMethod($"Serialize{typeName}")
+                .Invoke(null, new object[] { value, _stream });
             
             _stream.Seek(0, SeekOrigin.Begin);
-            var deserializedValue = (T) _helper.GetType().GetMethod($"Deserialize{typeName}")
-                .Invoke(_helper, new object[] { _stream });
+            var deserializedValue = (T) typeof(SerializationHelper).GetMethod($"Deserialize{typeName}")
+                .Invoke(null, new object[] { _stream });
             
             Assert.AreEqual(value, deserializedValue);
         }

@@ -107,6 +107,11 @@ namespace Skaillz.Ubernet.NetworkEntities.Unity
         private void OnValidate()
         {
             ShowDebugInfo = EditorPrefs.GetBool(ShowComponentDebugInfoPrefKey);
+
+            if (!Application.isPlaying)
+            {
+                GetComponent<GameObjectNetworkEntityBase>().ReassignComponentIds();
+            }
         }
         
         [ContextMenu("Toggle NetworkComponent Debug Info")]

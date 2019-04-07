@@ -3,25 +3,22 @@ using UnityEngine;
 
 namespace Skaillz.Ubernet.DefaultSerializers.Unity
 {
-    public class ColorSerializer : ICustomTypeSerializer
+    public class ColorSerializer : CustomTypeSerializer<Color>
     {
-        private readonly SerializationHelper _helper = new SerializationHelper();
-        
-        public void Serialize(object value, Stream stream)
+        public override void Serialize(Color value, Stream stream)
         {
-            var col = (Color) value;
-            _helper.SerializeFloat(col.r, stream);
-            _helper.SerializeFloat(col.g, stream);
-            _helper.SerializeFloat(col.b, stream);
-            _helper.SerializeFloat(col.a, stream);
+            SerializationHelper.SerializeFloat(value.r, stream);
+            SerializationHelper.SerializeFloat(value.g, stream);
+            SerializationHelper.SerializeFloat(value.b, stream);
+            SerializationHelper.SerializeFloat(value.a, stream);
         }
 
-        public object Deserialize(Stream stream)
+        public override Color Deserialize(Stream stream)
         {
-            float r = _helper.DeserializeFloat(stream);
-            float g = _helper.DeserializeFloat(stream);
-            float b = _helper.DeserializeFloat(stream);
-            float a = _helper.DeserializeFloat(stream);
+            float r = SerializationHelper.DeserializeFloat(stream);
+            float g = SerializationHelper.DeserializeFloat(stream);
+            float b = SerializationHelper.DeserializeFloat(stream);
+            float a = SerializationHelper.DeserializeFloat(stream);
             return new Color(r, g, b, a);
         }
     }

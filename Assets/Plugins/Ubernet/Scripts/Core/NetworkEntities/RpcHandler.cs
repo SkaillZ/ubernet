@@ -31,7 +31,7 @@ namespace Skaillz.Ubernet.NetworkEntities
             
             if (!serializer.IsTypeRegistered(typeof(RpcCall)))
             {
-                serializer.RegisterCustomType(typeof(RpcCall), DefaultTypes.Rpc, new RpcCallSerializer(serializer));
+                serializer.RegisterCustomType(DefaultTypes.Rpc, new RpcCallSerializer(serializer));
             }
             
             InitializeRpcs();
@@ -132,7 +132,7 @@ namespace Skaillz.Ubernet.NetworkEntities
             _context.Entity.Manager.SendEvent(DefaultEvents.Rpc, call, target, reliable);
         }
 
-        internal class RpcCall
+        internal struct RpcCall
         {
             public int EntityId { get; set; }
             public short ComponentId { get; set; }
@@ -140,38 +140,33 @@ namespace Skaillz.Ubernet.NetworkEntities
             public object[] Params { get; set; }
         }
 
-        internal class RpcCallSerializer : ICustomTypeSerializer
+        internal class RpcCallSerializer : CustomTypeSerializer<RpcCall>
         {
             private readonly ISerializer _baseSerializer;
-            private readonly SerializationHelper _helper;
             
             public RpcCallSerializer(ISerializer baseSerializer)
             {
                 _baseSerializer = baseSerializer;
-                _helper = new SerializationHelper();
             }
             
-            public void Serialize(object value, Stream stream)
+            public override void Serialize(RpcCall rpcCall, Stream stream)
             {
-                var rpcCall = (RpcCall) value;
-                _helper.SerializeInt(rpcCall.EntityId, stream);
-                _helper.SerializeShort(rpcCall.ComponentId, stream);
-                _helper.SerializeShort(rpcCall.RpcCode, stream);
+                SerializationHelper.SerializeInt(rpcCall.EntityId, stream);
+                SerializationHelper.SerializeShort(rpcCall.ComponentId, stream);
+                SerializationHelper.SerializeShort(rpcCall.RpcCode, stream);
 
                 _baseSerializer.Serialize(rpcCall.Params, stream);
             }
 
-            public object Deserialize(Stream stream)
+            public override RpcCall Deserialize(Stream stream)
             {
-                var rpcCall = new RpcCall
+                return new RpcCall
                 {
-                    EntityId = _helper.DeserializeInt(stream),
-                    ComponentId = _helper.DeserializeShort(stream),
-                    RpcCode = _helper.DeserializeShort(stream),
+                    EntityId = SerializationHelper.DeserializeInt(stream),
+                    ComponentId = SerializationHelper.DeserializeShort(stream),
+                    RpcCode = SerializationHelper.DeserializeShort(stream),
                     Params = (object[]) _baseSerializer.Deserialize(stream)
                 };
-
-                return rpcCall;
             }
         }
     }

@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
 
 namespace Skaillz.Ubernet
 {
@@ -27,6 +29,22 @@ namespace Skaillz.Ubernet
         public static double GetCurrentTime()
         {
             return Stopwatch.ElapsedMilliseconds;
+        }
+        
+        public static void Clear(this MemoryStream source)
+        {
+            byte[] buffer = source.GetBuffer();
+            Array.Clear(buffer, 0, buffer.Length);
+            source.Position = 0;
+            source.SetLength(0);
+        }
+        
+        public static void From(this MemoryStream source, byte[] data)
+        {
+            source.Position = 0;
+            source.SetLength(data.LongLength);
+            byte[] buffer = source.GetBuffer();
+            Buffer.BlockCopy(data, 0, buffer, 0, data.Length);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace Skaillz.Ubernet
 {
@@ -6,5 +7,7 @@ namespace Skaillz.Ubernet
     {
         void Serialize(object value, Stream stream);
         object Deserialize(Stream stream);
+        
+        Type Type { get; }
     }
 }

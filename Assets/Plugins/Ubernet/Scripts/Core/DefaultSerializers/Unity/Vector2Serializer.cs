@@ -3,21 +3,18 @@ using UnityEngine;
 
 namespace Skaillz.Ubernet.DefaultSerializers.Unity
 {
-    public class Vector2Serializer : ICustomTypeSerializer
+    public class Vector2Serializer : CustomTypeSerializer<Vector2>
     {
-        private readonly SerializationHelper _helper = new SerializationHelper();
-        
-        public void Serialize(object value, Stream stream)
+        public override void Serialize(Vector2 value, Stream stream)
         {
-            var vector = (Vector2) value;
-            _helper.SerializeFloat(vector.x, stream);
-            _helper.SerializeFloat(vector.y, stream);
+            SerializationHelper.SerializeFloat(value.x, stream);
+            SerializationHelper.SerializeFloat(value.y, stream);
         }
 
-        public object Deserialize(Stream stream)
+        public override Vector2 Deserialize(Stream stream)
         {
-            float x = _helper.DeserializeFloat(stream);
-            float y = _helper.DeserializeFloat(stream);
+            float x = SerializationHelper.DeserializeFloat(stream);
+            float y = SerializationHelper.DeserializeFloat(stream);
             return new Vector2(x, y);
         }
     }

@@ -23,11 +23,12 @@ namespace Skaillz.Ubernet
             public const byte ObjectArray = 15;
         }
 
+        
         private class CustomType
         {
-            public CustomType(Type type, byte id, ICustomTypeSerializer serializer)
+            public CustomType(byte id, ICustomTypeSerializer serializer)
             {
-                Type = type;
+                Type = serializer.Type;
                 Id = id;
                 Serializer = serializer;
             }
@@ -42,7 +43,6 @@ namespace Skaillz.Ubernet
         private readonly Dictionary<Type, CustomType> _typeMappings = new Dictionary<Type, CustomType>();
         private readonly Dictionary<byte, CustomType> _codeMappings = new Dictionary<byte, CustomType>();
 
-        private readonly SerializationHelper _helper = new SerializationHelper();
         private readonly MemoryStream _serializeStream = new MemoryStream(128);
         private byte _nextCustomTypeCode = MinCustomCode;
 
@@ -53,63 +53,63 @@ namespace Skaillz.Ubernet
             var type = value?.GetType();
             if (ReferenceEquals(value, null))
             {
-                _helper.SerializeByte(TypeId.Null, stream);
+                SerializationHelper.SerializeByte(TypeId.Null, stream);
             }
             else if (type == typeof(byte))
             {
-                _helper.SerializeByte(TypeId.Byte, stream);
-                _helper.SerializeByte((byte) value, stream);
+                SerializationHelper.SerializeByte(TypeId.Byte, stream);
+                SerializationHelper.SerializeByte((byte) value, stream);
             }
             else if (type == typeof(bool))
             {
-                _helper.SerializeByte(TypeId.Bool, stream);
-                _helper.SerializeBool((bool) value, stream);
+                SerializationHelper.SerializeByte(TypeId.Bool, stream);
+                SerializationHelper.SerializeBool((bool) value, stream);
             }
             else if (type == typeof(short))
             {
-                _helper.SerializeByte(TypeId.Short, stream);
-                _helper.SerializeShort((short) value, stream);
+                SerializationHelper.SerializeByte(TypeId.Short, stream);
+                SerializationHelper.SerializeShort((short) value, stream);
             }
             else if (type == typeof(int))
             {
-                _helper.SerializeByte(TypeId.Int, stream);
-                _helper.SerializeInt((int) value, stream);
+                SerializationHelper.SerializeByte(TypeId.Int, stream);
+                SerializationHelper.SerializeInt((int) value, stream);
             }
             else if (type == typeof(long))
             {
-                _helper.SerializeByte(TypeId.Long, stream);
-                _helper.SerializeLong((long) value, stream);
+                SerializationHelper.SerializeByte(TypeId.Long, stream);
+                SerializationHelper.SerializeLong((long) value, stream);
             }
             else if (type == typeof(float))
             {
-                _helper.SerializeByte(TypeId.Float, stream);
-                _helper.SerializeFloat((float) value, stream);
+                SerializationHelper.SerializeByte(TypeId.Float, stream);
+                SerializationHelper.SerializeFloat((float) value, stream);
             }
             else if (type == typeof(double))
             {
-                _helper.SerializeByte(TypeId.Double, stream);
-                _helper.SerializeDouble((double) value, stream);
+                SerializationHelper.SerializeByte(TypeId.Double, stream);
+                SerializationHelper.SerializeDouble((double) value, stream);
             }
             else if (type == typeof(string))
             {
-                _helper.SerializeByte(TypeId.String, stream);
-                _helper.SerializeString((string) value, stream);
+                SerializationHelper.SerializeByte(TypeId.String, stream);
+                SerializationHelper.SerializeString((string) value, stream);
             }
             else if (type.IsArray)
             {
                 if (type == typeof(byte[]))
                 {
-                    _helper.SerializeByte(TypeId.ByteArray, stream);
-                    _helper.SerializeByteArray((byte[]) value, stream);
+                    SerializationHelper.SerializeByte(TypeId.ByteArray, stream);
+                    SerializationHelper.SerializeByteArray((byte[]) value, stream);
                 }
                 else if (type == typeof(object[]))
                 {
-                    _helper.SerializeByte(TypeId.ObjectArray, stream);
+                    SerializationHelper.SerializeByte(TypeId.ObjectArray, stream);
                     SerializeObjectArray((object[]) value, stream);
                 }
                 else
                 {
-                    _helper.SerializeByte(TypeId.TypedArray, stream);
+                    SerializationHelper.SerializeByte(TypeId.TypedArray, stream);
 
                     var elementType = type.GetElementType();
                     // ReSharper disable once AssignNullToNotNullAttribute
@@ -120,7 +120,7 @@ namespace Skaillz.Ubernet
                     }
 
                     var customType = _typeMappings[elementType];
-                    _helper.SerializeByte(customType.Id, stream);
+                    SerializationHelper.SerializeByte(customType.Id, stream);
                     SerializeCustomTypedArray(value, customType, stream);
                 }
             }
@@ -133,40 +133,40 @@ namespace Skaillz.Ubernet
                 }
 
                 var customType = _typeMappings[type];
-                _helper.SerializeByte(customType.Id, stream);
+                SerializationHelper.SerializeByte(customType.Id, stream);
                 customType.Serializer.Serialize(value, stream);
             }
         }
 
         public object Deserialize(Stream stream)
         {
-            byte typeId = _helper.DeserializeByte(stream);
+            byte typeId = SerializationHelper.DeserializeByte(stream);
             switch (typeId)
             {
                 case TypeId.Null:
                     return null;
                 case TypeId.Byte:
-                    return _helper.DeserializeByte(stream);
+                    return SerializationHelper.DeserializeByte(stream);
                 case TypeId.Bool:
-                    return _helper.DeserializeBool(stream);
+                    return SerializationHelper.DeserializeBool(stream);
                 case TypeId.Short:
-                    return _helper.DeserializeShort(stream);
+                    return SerializationHelper.DeserializeShort(stream);
                 case TypeId.Int:
-                    return _helper.DeserializeInt(stream);
+                    return SerializationHelper.DeserializeInt(stream);
                 case TypeId.Long:
-                    return _helper.DeserializeLong(stream);
+                    return SerializationHelper.DeserializeLong(stream);
                 case TypeId.Float:
-                    return _helper.DeserializeFloat(stream);
+                    return SerializationHelper.DeserializeFloat(stream);
                 case TypeId.Double:
-                    return _helper.DeserializeDouble(stream);
+                    return SerializationHelper.DeserializeDouble(stream);
                 case TypeId.String:
-                    return _helper.DeserializeString(stream);
+                    return SerializationHelper.DeserializeString(stream);
                 case TypeId.ByteArray:
-                    return _helper.DeserializeByteArray(stream);
+                    return SerializationHelper.DeserializeByteArray(stream);
                 case TypeId.ObjectArray:
                     return DeserializeObjectArray(stream);
                 case TypeId.TypedArray:
-                    byte elementTypeId = _helper.DeserializeByte(stream);
+                    byte elementTypeId = SerializationHelper.DeserializeByte(stream);
                     if (!_codeMappings.ContainsKey(elementTypeId))
                     {
                         throw new UnknownTypeException(
@@ -187,8 +187,8 @@ namespace Skaillz.Ubernet
         public byte[] Serialize(NetworkEvent evt)
         {
             ClearBuffer();
-            _helper.SerializeInt(evt.SenderId, _serializeStream);
-            _helper.SerializeByte(evt.Code, _serializeStream);
+            SerializationHelper.SerializeInt(evt.SenderId, _serializeStream);
+            SerializationHelper.SerializeByte(evt.Code, _serializeStream);
             
             Serialize(evt.Data, _serializeStream);
 
@@ -205,15 +205,15 @@ namespace Skaillz.Ubernet
 
             var evt = new NetworkEvent
             {
-                SenderId = _helper.DeserializeInt(_serializeStream),
-                Code = _helper.DeserializeByte(_serializeStream),
+                SenderId = SerializationHelper.DeserializeInt(_serializeStream),
+                Code = SerializationHelper.DeserializeByte(_serializeStream),
                 Data = Deserialize(_serializeStream)
             };
 
             return evt;
         }
 
-        public void RegisterCustomType(Type type, ICustomTypeSerializer serializer)
+        public void RegisterCustomType<T>(CustomTypeSerializer<T> serializer)
         {
             byte nextCode = _nextCustomTypeCode;
             while (_codeMappings.ContainsKey(nextCode))
@@ -231,13 +231,14 @@ namespace Skaillz.Ubernet
                     $"Type registration failed: You registered too many custom types. You can register up to {MaxCustomTypes} types");
             }
 
-            RegisterCustomType(type, nextCode, serializer);
+            RegisterCustomType(nextCode, serializer);
 
             _nextCustomTypeCode = ++nextCode;
         }
 
-        public void RegisterCustomType(Type type, byte code, ICustomTypeSerializer serializer)
+        public void RegisterCustomType<T>(byte code, CustomTypeSerializer<T> serializer)
         {
+            var type = typeof(T);
             if (_typeMappings.ContainsKey(type))
             {
                 throw new TypeRegistrationException($"The type '{type.FullName}' is already registered.");
@@ -248,7 +249,7 @@ namespace Skaillz.Ubernet
                 throw new TypeRegistrationException($"The code '{code}' is already registered.");
             }
 
-            var customType = new CustomType(type, code, serializer);
+            var customType = new CustomType(code, serializer);
             _typeMappings.Add(type, customType);
             _codeMappings.Add(code, customType);
         }
@@ -334,7 +335,7 @@ namespace Skaillz.Ubernet
             var array = (Array) value;
             
             // Write length
-            _helper.SerializeInt(array.Length, stream);
+            SerializationHelper.SerializeInt(array.Length, stream);
 
             var serializer = type.Serializer;
             foreach (var elem in array)
@@ -346,7 +347,7 @@ namespace Skaillz.Ubernet
         private Array DeserializeCustomTypedArray(CustomType type, Stream stream)
         {
             // Read length
-            int length = _helper.DeserializeInt(stream);
+            int length = SerializationHelper.DeserializeInt(stream);
             
             var array = Array.CreateInstance(type.Type, length);
             var serializer = type.Serializer;
@@ -361,7 +362,7 @@ namespace Skaillz.Ubernet
         private void SerializeObjectArray(object[] array, Stream stream)
         {
             // Write length
-            _helper.SerializeInt(array.Length, stream);
+            SerializationHelper.SerializeInt(array.Length, stream);
 
             foreach (var elem in array)
             {
@@ -372,7 +373,7 @@ namespace Skaillz.Ubernet
         private object[] DeserializeObjectArray(Stream stream)
         {
             // Read length
-            int length = _helper.DeserializeInt(stream);
+            int length = SerializationHelper.DeserializeInt(stream);
             var array = new object[length];
 
             for (var i = 0; i < length; i++)

@@ -3,23 +3,20 @@ using UnityEngine;
 
 namespace Skaillz.Ubernet.DefaultSerializers.Unity
 {
-    public class Vector3Serializer : ICustomTypeSerializer
-    {
-        private readonly SerializationHelper _helper = new SerializationHelper();
-        
-        public void Serialize(object value, Stream stream)
+    public class Vector3Serializer : CustomTypeSerializer<Vector3>
+    {       
+        public override void Serialize(Vector3 value, Stream stream)
         {
-            var vector = (Vector3) value;
-            _helper.SerializeFloat(vector.x, stream);
-            _helper.SerializeFloat(vector.y, stream);
-            _helper.SerializeFloat(vector.z, stream);
+            SerializationHelper.SerializeFloat(value.x, stream);
+            SerializationHelper.SerializeFloat(value.y, stream);
+            SerializationHelper.SerializeFloat(value.z, stream);
         }
 
-        public object Deserialize(Stream stream)
+        public override Vector3 Deserialize(Stream stream)
         {
-            float x = _helper.DeserializeFloat(stream);
-            float y = _helper.DeserializeFloat(stream);
-            float z = _helper.DeserializeFloat(stream);
+            float x = SerializationHelper.DeserializeFloat(stream);
+            float y = SerializationHelper.DeserializeFloat(stream);
+            float z = SerializationHelper.DeserializeFloat(stream);
             return new Vector3(x, y, z);
         }
     }
