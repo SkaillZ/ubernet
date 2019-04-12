@@ -22,7 +22,6 @@ namespace Skaillz.Ubernet
             public const byte ByteArray = 11;
             public const byte ObjectArray = 15;
         }
-
         
         private class CustomType
         {
@@ -184,33 +183,28 @@ namespace Skaillz.Ubernet
             }
         }
 
-        public byte[] Serialize(NetworkEvent evt)
+        public byte[] Serialize(NetworkEvent evt, out int length)
         {
-            ClearBuffer();
+            _serializeStream.Clear();
             SerializationHelper.SerializeInt(evt.SenderId, _serializeStream);
             SerializationHelper.SerializeByte(evt.Code, _serializeStream);
             
             Serialize(evt.Data, _serializeStream);
 
-            return _serializeStream.ToArray();
+            length = (int) _serializeStream.Length;
+            return _serializeStream.GetBuffer();
         }
 
-        public NetworkEvent Deserialize(byte[] bytes)
+        public NetworkEvent Deserialize(byte[] bytes, int length)
         {
-            ClearBuffer();
-            _serializeStream.Write(bytes, 0, bytes.Length);
+            _serializeStream.From(bytes, length);
 
-            // After writing, the stream is at the end of the data. Reset it.
-            _serializeStream.Seek(0, SeekOrigin.Begin);
-
-            var evt = new NetworkEvent
+            return new NetworkEvent
             {
                 SenderId = SerializationHelper.DeserializeInt(_serializeStream),
                 Code = SerializationHelper.DeserializeByte(_serializeStream),
                 Data = Deserialize(_serializeStream)
             };
-
-            return evt;
         }
 
         public void RegisterCustomType<T>(CustomTypeSerializer<T> serializer)
@@ -382,12 +376,6 @@ namespace Skaillz.Ubernet
             }
 
             return array;
-        }
-
-        private void ClearBuffer()
-        {
-            _serializeStream.Seek(0, SeekOrigin.Begin);
-            _serializeStream.SetLength(0);
         }
         
         public class TypeRegistrationException : UbernetException

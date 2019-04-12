@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ExitGames.Client.Photon;
-using ExitGames.Client.Photon.LoadBalancing;
-using UniRx;
+using Photon.Realtime;
 
 namespace Skaillz.Ubernet.Providers.Photon
 {
@@ -14,10 +13,12 @@ namespace Skaillz.Ubernet.Providers.Photon
         private readonly LoadBalancingClient _photonClient;
         
         private bool _sendEvents = true;
+        private RaiseEventOptions _raiseEventOptions = new RaiseEventOptions();
+        private PhotonArrayWrapper _photonArrayWrapper = new PhotonArrayWrapper();
 
         public override IClient Server { get; protected set; } = new Client(-1);
         public override bool IsConnected => _photonClient.State == ClientState.Joined && _photonClient.IsConnectedAndReady;
-        public override double ServerTime => _photonClient.loadBalancingPeer.ServerTimeInMilliSeconds / 1000.0;
+        public override double ServerTime => _photonClient.LoadBalancingPeer.ServerTimeInMilliSeconds / 1000.0;
 
         public LoadBalancingClient PhotonClient => _photonClient;
         
@@ -31,7 +32,7 @@ namespace Skaillz.Ubernet.Providers.Photon
             }
             set
             {
-                _photonClient.loadBalancingPeer.IsSendingOnlyAcks = !value;
+                _photonClient.LoadBalancingPeer.IsSendingOnlyAcks = !value;
                 _sendEvents = value;
             }
         }
@@ -51,6 +52,9 @@ namespace Skaillz.Ubernet.Providers.Photon
             FillRoom();
             
             RespondToPings();
+
+            PhotonPeer.RegisterType(typeof(PhotonArrayWrapper), PhotonArrayWrapper.PhotonTypeCode, 
+                PhotonArrayWrapper.Serialize, PhotonArrayWrapper.Deserialize);
         }
 
         public override void Update()
@@ -69,7 +73,7 @@ namespace Skaillz.Ubernet.Providers.Photon
             var observable = PhotonUtils.CreateObservableForExpectedStateChange(_photonClient,
                 expectedState: ClientState.ConnectedToMasterserver, returnValue: this);
             
-            _photonClient.OpLeaveRoom();
+            _photonClient.OpLeaveRoom(false);
 
             return observable;
         }
@@ -102,15 +106,16 @@ namespace Skaillz.Ubernet.Providers.Photon
                 targetClients = ResolveClientIds(target);
             }
 
-            var options = new RaiseEventOptions
-            {
-                TargetActors = targetClients,
-                Receivers = receivers ?? ReceiverGroup.Others
-            };
+            _raiseEventOptions.TargetActors = targetClients;
+            _raiseEventOptions.Receivers = receivers ?? ReceiverGroup.Others;
+            
+            var serialized = Serializer.Serialize(evt, out int length);
+            _photonArrayWrapper.Array = serialized;
+            _photonArrayWrapper.Length = length;
 
             // Send the event over the network
-            _photonClient.OpRaiseEvent(PhotonEventCode, evt.Data != null ? Serializer.Serialize(evt) : null,
-                reliable, options);
+            _photonClient.OpRaiseEvent(PhotonEventCode, evt.Data != null ? _photonArrayWrapper : null,
+                _raiseEventOptions, reliable ? SendOptions.SendReliable : SendOptions.SendUnreliable);
         }
 
         public override void MigrateHost(int newHostId)
@@ -124,16 +129,16 @@ namespace Skaillz.Ubernet.Providers.Photon
         
         private void InitializeEvents()
         {
-            _photonClient.OnStateChangeAction += state =>
+            _photonClient.StateChanged += (oldState, newState) =>
             {
-                if (state != ClientState.Joined)
+                if (newState != ClientState.Joined)
                 {
                     var reason = PhotonUtils.ConvertPhotonDisconnectCause(_photonClient.DisconnectedCause);
                     DisconnectedSubject.OnNext(reason);
                 }
             };
 
-            _photonClient.OnEventAction += data =>
+            _photonClient.EventReceived += data =>
             {
                 switch (data.Code)
                 {
@@ -160,7 +165,8 @@ namespace Skaillz.Ubernet.Providers.Photon
                         }
                         break;
                     case PhotonEventCode:
-                        var evt = Serializer.Deserialize((byte[]) data.Parameters[ParameterCode.Data]);
+                        var buffer = (PhotonArrayWrapper) data.Parameters[ParameterCode.Data];
+                        var evt = Serializer.Deserialize(buffer.Array, buffer.Length);
                         EventSubject.OnNext(evt);
                         break;
                 }
@@ -196,16 +202,39 @@ namespace Skaillz.Ubernet.Providers.Photon
                 roomProperties.Add(ParameterCode.ExpectedValues, expectedProperties);
             }
 
-            return _photonClient.loadBalancingPeer.OpCustom(OperationCode.SetProperties, roomProperties, true);
+            return _photonClient.LoadBalancingPeer.SendOperation(OperationCode.SetProperties, roomProperties, SendOptions.SendReliable);
         }
 
         private void FillRoom()
         {
-            LocalClientRef.ClientId = _photonClient.LocalPlayer.ID;
+            LocalClientRef.ClientId = _photonClient.LocalPlayer.ActorNumber;
             Server.ClientId = _photonClient.CurrentRoom.MasterClientId;
 
             ClientDict = _photonClient.CurrentRoom.Players.Values
-                .Select(player => (IClient) new Client(player.ID)).ToDictionary(c => c.ClientId);
+                .Select(player => (IClient) new Client(player.ActorNumber)).ToDictionary(c => c.ClientId);
+        }
+
+        private class PhotonArrayWrapper
+        {
+            public const byte PhotonTypeCode = 255;
+            
+            public byte[] Array;
+            public int Length;
+
+            public static short Serialize(StreamBuffer outStream, object customObject)
+            {
+                var wrapper = (PhotonArrayWrapper) customObject;
+                outStream.Write(wrapper.Array, 0, wrapper.Length);
+                return (short) wrapper.Length;
+            }
+
+            public static object Deserialize(StreamBuffer inStream, short length)
+            {
+                var wrapper = new PhotonArrayWrapper {Array = new byte[length], Length = length};
+
+                inStream.Read(wrapper.Array, 0, length);
+                return wrapper;
+            }
         }
     }
 }

@@ -10,11 +10,11 @@ namespace Skaillz.Ubernet.NetworkEntities
     public class NetworkEntity : INetworkEntity
     {
         private readonly Dictionary<short, INetworkComponent> _components = new Dictionary<short, INetworkComponent>();
-        private readonly Dictionary<short, byte[]> _componentCaches = new Dictionary<short, byte[]>();
+        private readonly Dictionary<short, MemoryStream> _componentCaches = new Dictionary<short, MemoryStream>();
         protected readonly ISubject<INetworkComponent> _componentAddSubject = new Subject<INetworkComponent>();
         protected readonly ISubject<INetworkComponent> _componentRemoveSubject = new Subject<INetworkComponent>();
 
-        private readonly Dictionary<short, byte[]> _componentsToSerialize = new Dictionary<short, byte[]>();
+        private readonly List<short> _componentsToSerialize = new List<short>();
 
         public int Id { get; set; }
         public int OwnerId { get; set; }
@@ -28,6 +28,7 @@ namespace Skaillz.Ubernet.NetworkEntities
         public IObservable<INetworkComponent> OnComponentAdd => _componentAddSubject.AsObservable();
         public IObservable<INetworkComponent> OnComponentRemove => _componentRemoveSubject.AsObservable();
 
+        private const int ComponentCacheCapacity = 128;
         private readonly MemoryStream _stream = new MemoryStream(1024);
 
         public NetworkEntity()
@@ -60,6 +61,7 @@ namespace Skaillz.Ubernet.NetworkEntities
             }
             
             _components[component.Id] = component;
+            _componentCaches[component.Id] = new MemoryStream(ComponentCacheCapacity);
             (component as IRegistrationCallbacks)?.OnRegister();
         }
 
@@ -105,13 +107,17 @@ namespace Skaillz.Ubernet.NetworkEntities
 
                 _stream.Clear();
                 component.Serialize(_stream);
-                var bytes = _stream.ToArray();
+                
+                var bytes = _stream.GetBuffer();
+                int length = (int) _stream.Length;
 
-                if (!_componentCaches.ContainsKey(id)|| !UbernetUtils.AreArraysEqual(bytes, _componentCaches[id])
+                if (!UbernetUtils.AreArraysEqual(bytes, _componentCaches[id].GetBuffer(), length)
                     || !UpdateWhenChanged) 
                 {
-                    _componentsToSerialize[id] = bytes;
-                    _componentCaches[id] = bytes;
+                    _componentsToSerialize.Add(id);
+                    
+                    _componentCaches[id].Clear();
+                    _componentCaches[id].Write(bytes, 0, length);
                 }
             }
             
@@ -120,13 +126,13 @@ namespace Skaillz.Ubernet.NetworkEntities
             if (updatedNum > 0 || !UpdateWhenChanged) // Only streams with content are sent
             {
                 SerializationHelper.SerializeShort((short) updatedNum, stream);
-                foreach (var pair in _componentsToSerialize)
+                foreach (short id in _componentsToSerialize)
                 {
-                    short id = pair.Key;
-                    var bytes = pair.Value;
+                    var cache = _componentCaches[id];
+                    var bytes = cache.GetBuffer();
                     
                     SerializationHelper.SerializeShort(id, stream);
-                    stream.Write(bytes, 0, bytes.Length);
+                    stream.Write(bytes, 0, (int) cache.Length);
                 }
             }
         }

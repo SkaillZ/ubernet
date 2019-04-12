@@ -7,8 +7,8 @@ namespace Skaillz.Ubernet
     {
         void Serialize(object value, Stream stream);
         object Deserialize(Stream stream);
-        byte[] Serialize(NetworkEvent evt);
-        NetworkEvent Deserialize(byte[] bytes);
+        byte[] Serialize(NetworkEvent evt, out int length);
+        NetworkEvent Deserialize(byte[] bytes, int length);
         
         void RegisterCustomType<T>(CustomTypeSerializer<T> serializer);
         

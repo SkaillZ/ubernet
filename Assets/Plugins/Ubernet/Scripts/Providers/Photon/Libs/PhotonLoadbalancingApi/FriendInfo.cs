@@ -1,6 +1,6 @@
 ﻿// ----------------------------------------------------------------------------
 // <copyright file="FriendInfo.cs" company="Exit Games GmbH">
-//   Loadbalancing Framework for Photon - Copyright (C) 2013 Exit Games GmbH
+//   Loadbalancing Framework for Photon - Copyright (C) 2018 Exit Games GmbH
 // </copyright>
 // <summary>
 //   Collection of values related to a user / friend.
@@ -8,16 +8,16 @@
 // <author>developer@photonengine.com</author>
 // ----------------------------------------------------------------------------
 
-
-
-#if UNITY_4_7 || UNITY_5 || UNITY_5_0 || UNITY_5_1 || UNITY_2017_1_OR_NEWER
-#define UNITY
+#if UNITY_4_7 || UNITY_5 || UNITY_5_3_OR_NEWER
+#define SUPPORTED_UNITY
 #endif
 
 
-namespace ExitGames.Client.Photon.LoadBalancing
+namespace Photon.Realtime
 {
-    #if UNITY || NETFX_CORE
+    using ExitGames.Client.Photon;
+
+    #if SUPPORTED_UNITY || NETFX_CORE
     using Hashtable = ExitGames.Client.Photon.Hashtable;
     using SupportClass = ExitGames.Client.Photon.SupportClass;
     #endif
@@ -28,7 +28,10 @@ namespace ExitGames.Client.Photon.LoadBalancing
     /// </summary>
     public class FriendInfo
     {
-        public string Name { get; internal protected set; }
+        [System.Obsolete("Use UserId.")]
+        public string Name { get { return this.UserId; } }
+        public string UserId { get; internal protected set; }
+
         public bool IsOnline { get; internal protected set; }
         public string Room { get; internal protected set; }
 
@@ -39,7 +42,7 @@ namespace ExitGames.Client.Photon.LoadBalancing
 
         public override string ToString()
         {
-        return string.Format("{0}\t is: {1}", this.Name, (!this.IsOnline) ? "offline" : this.IsInRoom ? "playing" : "on master");
+        return string.Format("{0}\t is: {1}", this.UserId, (!this.IsOnline) ? "offline" : this.IsInRoom ? "playing" : "on master");
         }
     }
 }

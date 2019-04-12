@@ -140,7 +140,7 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
             {
                 foreach (var peer in _peers)
                 {
-                    peer.Send(Serializer.Serialize(evt),
+                    peer.Send(Serializer.Serialize(evt, out int length), 0, length,
                         reliable ? SendOptions.Unreliable : SendOptions.ReliableOrdered);
                 }
             }
@@ -156,7 +156,7 @@ namespace Skaillz.Ubernet.Providers.LiteNetLibExperimental
             _listener.NetworkReceiveEvent += (peer, reader) =>
             {
                 var bytes = reader.Data;
-                var evt = Serializer.Deserialize(bytes);
+                var evt = Serializer.Deserialize(bytes, reader.AvailableBytes);
 
                 EventSubject.OnNext(evt);
             };

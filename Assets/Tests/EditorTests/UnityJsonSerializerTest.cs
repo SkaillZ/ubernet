@@ -21,7 +21,7 @@ namespace Skaillz.Ubernet.Tests
         {
             var p = new TestSerializable { Name = "Hans", Age = 22 };
             Assert.AreEqual(p, _serializer.Deserialize(
-                _serializer.Serialize(TestUtils.CreateNetworkEvent(p))
+                _serializer.Serialize(TestUtils.CreateNetworkEvent(p), out int length), length
             ).Data);
         }
         

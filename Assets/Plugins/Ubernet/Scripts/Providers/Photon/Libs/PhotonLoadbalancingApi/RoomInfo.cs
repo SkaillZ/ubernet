@@ -1,6 +1,6 @@
 ﻿// ----------------------------------------------------------------------------
 // <copyright file="RoomInfo.cs" company="Exit Games GmbH">
-//   Loadbalancing Framework for Photon - Copyright (C) 2011 Exit Games GmbH
+//   Loadbalancing Framework for Photon - Copyright (C) 2018 Exit Games GmbH
 // </copyright>
 // <summary>
 //   This class resembles info about available rooms, as sent by the Master
@@ -9,15 +9,17 @@
 // <author>developer@photonengine.com</author>
 // ----------------------------------------------------------------------------
 
-#if UNITY_4_7 || UNITY_5 || UNITY_5_0 || UNITY_5_1 || UNITY_2017_1_OR_NEWER
-#define UNITY
+#if UNITY_4_7 || UNITY_5 || UNITY_5_3_OR_NEWER
+#define SUPPORTED_UNITY
 #endif
 
-namespace ExitGames.Client.Photon.LoadBalancing
+
+namespace Photon.Realtime
 {
     using System.Collections;
+    using ExitGames.Client.Photon;
 
-    #if UNITY || NETFX_CORE
+    #if SUPPORTED_UNITY || NETFX_CORE
     using Hashtable = ExitGames.Client.Photon.Hashtable;
     using SupportClass = ExitGames.Client.Photon.SupportClass;
     #endif
@@ -33,14 +35,20 @@ namespace ExitGames.Client.Photon.LoadBalancing
     /// </remarks>
     public class RoomInfo
     {
-        /// <summary>Used internally in lobby, to mark rooms that are no longer listed (for being full, closed or hidden).</summary>
-        protected internal bool removedFromList;
+        /// <summary>Used in lobby, to mark rooms that are no longer listed (for being full, closed or hidden).</summary>
+        public bool RemovedFromList;
 
         /// <summary>Backing field for property.</summary>
         private Hashtable customProperties = new Hashtable();
 
         /// <summary>Backing field for property.</summary>
         protected byte maxPlayers = 0;
+
+        /// <summary>Backing field for property.</summary>
+        protected int emptyRoomTtl = 0;
+
+        /// <summary>Backing field for property.</summary>
+        protected int playerTtl = 0;
 
         /// <summary>Backing field for property.</summary>
         protected string[] expectedUsers;
@@ -58,7 +66,7 @@ namespace ExitGames.Client.Photon.LoadBalancing
         protected string name;
 
         /// <summary>Backing field for master client id (actorNumber). defined by server in room props and ev leave.</summary>
-        protected internal int masterClientId;
+        public int masterClientId;
 
         /// <summary>Backing field for property.</summary>
         protected string[] propertiesListedInLobby;
@@ -87,12 +95,7 @@ namespace ExitGames.Client.Photon.LoadBalancing
         /// Count of players currently in room. This property is overwritten by the Room class (used when you're in a Room).
         /// </summary>
         public int PlayerCount { get; private set; }
-
-        /// <summary>
-        /// State if the local client is already in the game or still going to join it on gameserver (in lobby: false).
-        /// </summary>
-        public bool IsLocalClientInside { get; set; }
-
+        
         /// <summary>
         /// The limit of players for this room. This property is shown in lobby, too.
         /// If the room is full (players count == maxplayers), joining this room will fail.
@@ -205,8 +208,8 @@ namespace ExitGames.Client.Photon.LoadBalancing
             // list updates will remove this game from the game listing
             if (propertiesToCache.ContainsKey(GamePropertyKey.Removed))
             {
-                this.removedFromList = (bool)propertiesToCache[GamePropertyKey.Removed];
-                if (this.removedFromList)
+                this.RemovedFromList = (bool)propertiesToCache[GamePropertyKey.Removed];
+                if (this.RemovedFromList)
                 {
                     return;
                 }
@@ -251,6 +254,16 @@ namespace ExitGames.Client.Photon.LoadBalancing
             if (propertiesToCache.ContainsKey((byte)GamePropertyKey.ExpectedUsers))
             {
                 this.expectedUsers = (string[])propertiesToCache[GamePropertyKey.ExpectedUsers];
+            }
+
+            if (propertiesToCache.ContainsKey((byte)GamePropertyKey.EmptyRoomTtl))
+            {
+                this.emptyRoomTtl = (int)propertiesToCache[GamePropertyKey.EmptyRoomTtl];
+            }
+
+            if (propertiesToCache.ContainsKey((byte)GamePropertyKey.PlayerTtl))
+            {
+                this.playerTtl = (int)propertiesToCache[GamePropertyKey.PlayerTtl];
             }
 
             // merge the custom properties (from your application) to the cache (only string-typed keys will be kept)

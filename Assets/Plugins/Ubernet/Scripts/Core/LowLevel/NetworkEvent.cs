@@ -1,6 +1,6 @@
 ﻿namespace Skaillz.Ubernet
 {
-    public class NetworkEvent
+    public struct NetworkEvent
     {
         public int SenderId { get; set; }
         public byte Code { get; set; }

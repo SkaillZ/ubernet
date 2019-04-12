@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
-using ExitGames.Client.Photon.LoadBalancing;
 using NUnit.Framework;
+using Photon.Realtime;
 using Skaillz.Ubernet.Providers.Photon;
 using UniRx;
 using UnityEngine;

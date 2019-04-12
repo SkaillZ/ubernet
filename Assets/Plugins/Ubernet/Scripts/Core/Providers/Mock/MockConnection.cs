@@ -87,12 +87,15 @@ namespace Skaillz.Ubernet.Providers.Mock
                 }
                 else
                 {
-                    var serializedEvent = Serializer.Serialize(evt);
+                    var serializedEvent = Serializer.Serialize(evt, out int length);
+                    byte[] bytes = new byte[length];
+                    Buffer.BlockCopy(serializedEvent, 0, bytes, 0, length);
+                    
                     var targetIds = ResolveClientIds(evt.Target);
                     if (evt.Target == MessageTarget.AllPlayers || evt.Target == MessageTarget.Server && _actAsServer
                         || Array.IndexOf(targetIds, LocalClient.ClientId) > -1)
                     {
-                        _receiveQueue.Enqueue(serializedEvent);
+                        _receiveQueue.Enqueue(bytes);
                     }
                 }
             }
@@ -100,7 +103,7 @@ namespace Skaillz.Ubernet.Providers.Mock
             while (_receiveQueue.Count > 0)
             {
                 var evt = _receiveQueue.Dequeue();
-                EventSubject.OnNext(Serializer.Deserialize(evt));
+                EventSubject.OnNext(Serializer.Deserialize(evt, evt.Length));
             }
         }
         
@@ -180,7 +183,10 @@ namespace Skaillz.Ubernet.Providers.Mock
 
                 foreach (var connection in targetConnections)
                 {
-                    connection._receiveQueue.Enqueue(serializer.Serialize(evt));
+                    var buffer = serializer.Serialize(evt, out int length);
+                    byte[] bytes = new byte[length];
+                    Buffer.BlockCopy(buffer, 0, bytes, 0, length);
+                    connection._receiveQueue.Enqueue(buffer);
                 }
             }
 
@@ -193,6 +199,12 @@ namespace Skaillz.Ubernet.Providers.Mock
                     mockConnection.HostMigratedSubject.OnNext(Server.LocalClient);
                 }
             }
+        }
+
+        private struct ArrayBuffer
+        {
+            public byte[] Array;
+            public int Length;
         }
     }
 }

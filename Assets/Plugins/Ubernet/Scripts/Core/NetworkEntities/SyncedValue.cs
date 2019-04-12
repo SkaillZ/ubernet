@@ -27,6 +27,9 @@ namespace Skaillz.Ubernet.NetworkEntities
         private readonly ISubject<T> _subject = new Subject<T>();
 
         private readonly EqualityComparer<T> _equalityComparer = EqualityComparer<T>.Default;
+
+        // Cache the value as an object to prevent lots of boxing
+        private object _objectValue;
         
         public SyncedValue() : this(default(T))
         {
@@ -45,6 +48,7 @@ namespace Skaillz.Ubernet.NetworkEntities
                 if (!_equalityComparer.Equals(_value, value))
                 {
                     _value = value;
+                    _objectValue = value;
                     SetDirty();
                 }
             }
@@ -67,7 +71,11 @@ namespace Skaillz.Ubernet.NetworkEntities
         
         internal override object GetValue()
         {
-            return _value;
+            if (_objectValue == null)
+            {
+                _objectValue = _value;
+            }
+            return _objectValue;
         }
 
         internal override void SetValue(object value)
@@ -75,6 +83,7 @@ namespace Skaillz.Ubernet.NetworkEntities
             var tValue = (T) value;
             if (!_equalityComparer.Equals(_value, tValue))
             {
+                _objectValue = value;
                 _value = tValue;
                 SetDirty();
             }

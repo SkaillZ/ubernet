@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using UniRx;
 
@@ -53,6 +54,10 @@ namespace Skaillz.Ubernet
         private IDisposable _pingSubscription;
         private long _currentRoundTripTime;
         private float _autoPingInterval = 1f;
+        
+        // Avoids GC allocations by using cached arrays
+        private int[] EmptyClientIdList = new int[0];
+        private int[] OneClientIdList = new int[1];
 
         public abstract void MigrateHost(int newHostId);
 
@@ -168,7 +173,8 @@ namespace Skaillz.Ubernet
             if (target is IClientIdResolvable)
             {
                 var resolvable = (IClientIdResolvable) target;
-                return new[] {resolvable.ClientId};
+                OneClientIdList[0] = resolvable.ClientId;
+                return OneClientIdList;
             }
             if (target is IClientIdListResolvable)
             {
@@ -176,7 +182,7 @@ namespace Skaillz.Ubernet
                 return resolvable.GetClientIds();
             }
 
-            return new int[0];
+            return EmptyClientIdList;
         }
 
         public virtual IObservable<IConnection> Disconnect()

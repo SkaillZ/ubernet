@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
-using ExitGames.Client.Photon.LoadBalancing;
 using NUnit.Framework;
+using Photon.Realtime;
 using Skaillz.Ubernet.Providers.LiteNetLibExperimental;
 using Skaillz.Ubernet.Providers.Mock;
 using Skaillz.Ubernet.Providers.Photon;

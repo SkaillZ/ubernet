@@ -1,6 +1,6 @@
 ﻿// ----------------------------------------------------------------------------
 // <copyright file="WebRpc.cs" company="Exit Games GmbH">
-//   Loadbalancing Framework for Photon - Copyright (C) 2016 Exit Games GmbH
+//   Loadbalancing Framework for Photon - Copyright (C) 2018 Exit Games GmbH
 // </copyright>
 // <summary>
 //   This class wraps responses of a Photon WebRPC call, coming from a
@@ -9,17 +9,17 @@
 // <author>developer@photonengine.com</author>
 // ----------------------------------------------------------------------------
 
-#if UNITY_4_7 || UNITY_5 || UNITY_5_0 || UNITY_5_1 || UNITY_2017_1_OR_NEWER
-#define UNITY
+#if UNITY_4_7 || UNITY_5 || UNITY_5_3_OR_NEWER
+#define SUPPORTED_UNITY
 #endif
 
 
-namespace ExitGames.Client.Photon.LoadBalancing
+namespace Photon.Realtime
 {
-    using ExitGames.Client.Photon;
     using System.Collections.Generic;
+    using ExitGames.Client.Photon;
 
-    #if UNITY || NETFX_CORE
+    #if SUPPORTED_UNITY || NETFX_CORE
     using Hashtable = ExitGames.Client.Photon.Hashtable;
     using SupportClass = ExitGames.Client.Photon.SupportClass;
     #endif
@@ -27,7 +27,7 @@ namespace ExitGames.Client.Photon.LoadBalancing
 
     /// <summary>Reads an operation response of a WebRpc and provides convenient access to most common values.</summary>
     /// <remarks>
-    /// See method PhotonNetwork.WebRpc.<br/>
+    /// See LoadBalancingClient.OpWebRpc.<br/>
     /// Create a WebRpcResponse to access common result values.<br/>
     /// The operationResponse.OperationCode should be: OperationCode.WebRpc.<br/>
     /// </remarks>

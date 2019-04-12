@@ -19,7 +19,7 @@ namespace Skaillz.Ubernet.Tests
         public void SerializesAndDeserializes_NetworkEvent()
         {
             var original = TestUtils.CreateNetworkEvent("foo", 2, 1);
-            var serialized = _serializer.Deserialize(_serializer.Serialize(original));
+            var serialized = _serializer.Deserialize(_serializer.Serialize(original, out int length), length);
             
             Assert.AreEqual(original.SenderId, serialized.SenderId);
             Assert.AreEqual(original.Code, serialized.Code);

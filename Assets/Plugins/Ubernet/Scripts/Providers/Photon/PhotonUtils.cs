@@ -1,6 +1,6 @@
 using System;
 using ExitGames.Client.Photon;
-using ExitGames.Client.Photon.LoadBalancing;
+using Photon.Realtime;
 using UniRx;
 
 namespace Skaillz.Ubernet.Providers.Photon
@@ -11,7 +11,6 @@ namespace Skaillz.Ubernet.Providers.Photon
         {
             switch (cause)
             {
-                case DisconnectCause.DisconnectByServerUserLimit:
                 case DisconnectCause.MaxCcuReached:
                     return DisconnectReason.ExceededLimits;
                 case DisconnectCause.Exception:
@@ -19,10 +18,10 @@ namespace Skaillz.Ubernet.Providers.Photon
                 case DisconnectCause.OperationNotAllowedInCurrentState:
                 case DisconnectCause.InvalidRegion:
                     return DisconnectReason.Exception;
-                case DisconnectCause.DisconnectByServer:
+                case DisconnectCause.ServerTimeout:
                 case DisconnectCause.DisconnectByServerLogic:
                     return DisconnectReason.DisconnectedByServer;
-                case DisconnectCause.TimeoutDisconnect:
+                case DisconnectCause.ClientTimeout:
                     return DisconnectReason.Timeout;
                 case DisconnectCause.InvalidAuthentication:
                 case DisconnectCause.CustomAuthenticationFailed:
@@ -38,8 +37,8 @@ namespace Skaillz.Ubernet.Providers.Photon
         {
             return Observable.Create<T>(observer =>
             {
-                photonClient.OnOpResponseAction += OpResponseAction;
-                photonClient.OnStateChangeAction += StateChangeAction;
+                photonClient.OpResponseReceived += OpResponseAction;
+                photonClient.StateChanged += StateChangeAction;
                 
                 void OpResponseAction(OperationResponse response)
                 {
@@ -50,14 +49,14 @@ namespace Skaillz.Ubernet.Providers.Photon
                     }
                 }
 
-                void StateChangeAction(ClientState state)
+                void StateChangeAction(ClientState oldState, ClientState newState)
                 {
-                    if (state == expectedState)
+                    if (newState == expectedState)
                     {
                         observer.OnNext(returnValue);
                         observer.OnCompleted();
                     }
-                    else if (state == ClientState.Disconnected)
+                    else if (newState == ClientState.Disconnected)
                     {
                         var reason = ConvertPhotonDisconnectCause(photonClient.DisconnectedCause);
                         observer.OnError(new ConnectionException("Disconnected from Photon.", reason));
@@ -67,8 +66,8 @@ namespace Skaillz.Ubernet.Providers.Photon
 
                 return Disposable.Create(() =>
                 {
-                    photonClient.OnOpResponseAction -= OpResponseAction;
-                    photonClient.OnStateChangeAction -= StateChangeAction;
+                    photonClient.OpResponseReceived -= OpResponseAction;
+                    photonClient.StateChanged -= StateChangeAction;
                 });
             });
         }

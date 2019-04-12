@@ -1,6 +1,6 @@
 using System;
 using ExitGames.Client.Photon;
-using ExitGames.Client.Photon.LoadBalancing;
+using Photon.Realtime;
 using UniRx;
 
 namespace Skaillz.Ubernet.Providers.Photon
@@ -86,10 +86,9 @@ namespace Skaillz.Ubernet.Providers.Photon
                 throw new ArgumentException($"{nameof(settings.AppVersion)} on {nameof(PhotonSettings)} must not be null or empty.");
             }
 
-            _photonClient.AutoJoinLobby = false;
             _photonClient.AppId = settings.AppId;
             _photonClient.AppVersion = settings.AppVersion;
-            _photonClient.TransportProtocol = settings.Protocol;
+            _photonClient.ExpectedProtocol = settings.Protocol;
 
             _photonSettings = settings;
 
@@ -110,8 +109,8 @@ namespace Skaillz.Ubernet.Providers.Photon
             }
 
             var cancel = Observable.FromEvent<OperationResponse>(
-                    handler => _photonClient.OnOpResponseAction += handler,
-                    handler => _photonClient.OnOpResponseAction -= handler
+                    handler => _photonClient.OpResponseReceived += handler,
+                    handler => _photonClient.OpResponseReceived -= handler
                 )
                 .Where(response => response.ReturnCode != 0)
                 .First()
@@ -153,8 +152,14 @@ namespace Skaillz.Ubernet.Providers.Photon
             
             var observable = PhotonUtils.CreateObservableForExpectedStateChange<IGame>(_photonClient,
                 expectedState: ClientState.Joined, returnValue: new PhotonAlreadyJoinedGame(_photonClient));
-            
-            _photonClient.OpCreateRoom(photonOptions.RoomName, photonOptions, photonOptions.PhotonLobby, photonOptions.ExpectedUsers);
+
+            _photonClient.OpCreateRoom(new EnterRoomParams
+            {
+                RoomName = photonOptions.RoomName,
+                RoomOptions = photonOptions,
+                Lobby = photonOptions.PhotonLobby,
+                ExpectedUsers = photonOptions.ExpectedUsers
+            });
             State = ConnectionState.JoiningRoom;
 
             return observable;
@@ -193,7 +198,11 @@ namespace Skaillz.Ubernet.Providers.Photon
                 expectedState: ClientState.Joined, returnValue: new PhotonAlreadyJoinedGame(_photonClient));
             State = ConnectionState.JoiningRoom;
 
-            _photonClient.OpJoinRoom(photonOptions.RoomName, photonOptions.ExpectedPlayers);
+            _photonClient.OpJoinRoom(new EnterRoomParams 
+            {
+                RoomName = photonOptions.RoomName,
+                ExpectedUsers = photonOptions.ExpectedPlayers
+            });
 
             return observable;
         }
@@ -226,8 +235,15 @@ namespace Skaillz.Ubernet.Providers.Photon
                 expectedState: ClientState.Joined, returnValue: new PhotonAlreadyJoinedGame(_photonClient));
             State = ConnectionState.JoiningRoom;
 
-            _photonClient.OpJoinRandomRoom(photonOptions.ExpectedCustomRoomProperties, photonOptions.ExpectedMaxPlayers, 
-                photonOptions.MatchmakingMode, photonOptions.Lobby, photonOptions.SqlLobbyFilter, photonOptions.ExpectedUsers);
+            _photonClient.OpJoinRandomRoom(new OpJoinRandomRoomParams
+            {
+                ExpectedCustomRoomProperties = photonOptions.ExpectedCustomRoomProperties,
+                ExpectedMaxPlayers = photonOptions.ExpectedMaxPlayers,
+                ExpectedUsers = photonOptions.ExpectedUsers,
+                MatchingType = photonOptions.MatchmakingMode,
+                TypedLobby = photonOptions.Lobby,
+                SqlLobbyFilter = photonOptions.SqlLobbyFilter
+            });
 
             return observable;
         }
@@ -267,9 +283,9 @@ namespace Skaillz.Ubernet.Providers.Photon
 
         private void InitializeEvents()
         {
-            _photonClient.OnStateChangeAction += state =>
+            _photonClient.StateChanged += (oldState, newState) =>
             {
-                switch (state)
+                switch (newState)
                 {
                     case ClientState.Disconnecting:
                         State = ConnectionState.Disconnecting;
