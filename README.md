@@ -401,16 +401,14 @@ public class MyComponent : MonoNetworkComponent
 {
     public string Data;
     
-    private SerializationHelper _helper = new SerializationHelper();
-    
     public override void Serialize(Stream stream)
     {
-        _helper.SerializeString(Data, stream);
+        SerializationHelper.SerializeString(Data, stream);
     }
     
     public override void Deserialize(Stream stream)
     {
-        Data = _helper.DeserializeString(stream);
+        Data = SerializationHelper.DeserializeString(stream);
     }
 }
 ```
