@@ -77,10 +77,7 @@ namespace Skaillz.Ubernet.NetworkEntities
             _rpcMethodLookup = new Dictionary<string, short>();
             
             var type = _context.GetType();
-            var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                .Where(m => m.GetCustomAttributes(typeof(NetworkRpcAttribute), false).Length > 0)
-                .OrderBy(m => m.Name)
-                .ToArray();
+            var methods = ReflectionCache.GetRpcMethods(type);
             
             for (short i = 0; i < methods.Length; i++)
             {

@@ -27,7 +27,7 @@ namespace Skaillz.Ubernet.Tests
 
         public class TestClass
         {
-            public SyncedValue<int> MyValue { get; set; }
+            public SyncedValue<int> MyValue;
         }
     }
 }

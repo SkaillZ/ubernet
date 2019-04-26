@@ -44,31 +44,12 @@ namespace Skaillz.Ubernet.NetworkEntities
                 throw new InvalidOperationException($"{nameof(SyncedValue)}s on the {nameof(SyncedValueSerializer)} instance have already been initialized.");
             }
             
-            // TODO: cache type fields
-            var type = _context.GetType();
-            var members = type.GetMembers(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                .OrderBy(m => m.Name).ToArray();
-
-            _syncedValues = new List<SyncedValue>();
+            var fields = ReflectionCache.GetSyncedValueFields(_context.GetType());
             
-            foreach (var member in members)
+            _syncedValues = new List<SyncedValue>();
+            foreach (var field in fields)
             {
-                if (member is FieldInfo)
-                {
-                    var field = (FieldInfo) member;
-                    if (typeof(SyncedValue).IsAssignableFrom(field.FieldType))
-                    {
-                        _syncedValues.Add((SyncedValue) field.GetValue(_context));
-                    }
-                }
-                else if (member is PropertyInfo)
-                {
-                    var property = (PropertyInfo) member;
-                    if (typeof(SyncedValue).IsAssignableFrom(property.PropertyType) && property.CanRead)
-                    {
-                        _syncedValues.Add((SyncedValue) property.GetValue(_context));
-                    }
-                }
+                _syncedValues.Add((SyncedValue) field.GetValue(_context));
             }
         }
     }

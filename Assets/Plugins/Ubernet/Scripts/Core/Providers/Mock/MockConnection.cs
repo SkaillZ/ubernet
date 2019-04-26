@@ -201,11 +201,5 @@ namespace Skaillz.Ubernet.Providers.Mock
                 }
             }
         }
-
-        private struct ArrayBuffer
-        {
-            public byte[] Array;
-            public int Length;
-        }
     }
 }
