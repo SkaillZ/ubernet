@@ -143,6 +143,7 @@ namespace Skaillz.Ubernet.Providers.Mock
                     client.PlayerLeftSubject.OnNext(connection.LocalClient);
                 }
                 
+                
                 connection.DisconnectedSubject.OnNext(DisconnectReason.CleanDisconnect);
             }
 
@@ -186,7 +187,7 @@ namespace Skaillz.Ubernet.Providers.Mock
                     var buffer = serializer.Serialize(evt, out int length);
                     byte[] bytes = new byte[length];
                     Buffer.BlockCopy(buffer, 0, bytes, 0, length);
-                    connection._receiveQueue.Enqueue(buffer);
+                    connection._receiveQueue.Enqueue(bytes);
                 }
             }
 
